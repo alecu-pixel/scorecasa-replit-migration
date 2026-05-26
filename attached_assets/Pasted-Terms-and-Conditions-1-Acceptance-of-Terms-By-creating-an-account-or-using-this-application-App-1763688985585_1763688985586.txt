@@ -1,0 +1,34 @@
+Terms and Conditions
+1. Acceptance of Terms
+By creating an account or using this application (“App”), you agree to be bound by these Terms and Conditions.
+2. Eligibility and Registration
+To use the App, you must register via email/password or a third-party provider (Google or GitHub). You agree that the information provided is accurate and up-to-date. You are responsible for keeping your credentials secure.
+3. Service Description
+The App collects data from various stores and generates a score for properties to help users make informed investment decisions. The scores and recommendations provided are for informational purposes only and do not constitute financial advice.
+4. Payment and Credits
+Users may purchase credits, which can be redeemed to perform property searches. Credits and fees are subject to the current pricing displayed in the App. All payments are processed securely. Credits are non-refundable except as required by law.
+5. User Conduct
+You agree to use the App lawfully and not to reverse engineer, duplicate, or misuse the service or any proprietary content. You must not attempt to circumvent the payment or authentication mechanisms.
+6. Data Collection, Privacy, and Compliance
+•	We collect user data including registration details, property search history, and payment information to provide and improve the service.
+•	Data is handled as described in our Privacy Policy, and in accordance with applicable US laws, including the California Consumer Privacy Act (CCPA).
+•	As a California resident, you have the right to request access, deletion, and disclosure of your personal information.
+•	We do not knowingly collect data from children under the age of 13.
+7. Intellectual Property
+All content, scores, software, and trademarks are owned by us or our licensors. You may not copy, distribute, or reverse engineer any part of the App.
+8. Limitation of Liability
+The App and its scores are provided “as is.” We do not guarantee the accuracy, completeness, or suitability of the scores for investment decisions. We are not liable for any damages, losses, or decisions made based on App data.
+9. Termination
+We reserve the right to suspend or terminate your account for violations of these Terms.
+10. Changes to Service and Terms
+We may update these Terms at any time. Notifications of changes will be provided through the App. Continued use of the App signifies your acceptance of the revised Terms.
+11. Contact Information
+For questions or privacy requests, please contact: [Your Contact Email].
+ 
+Additional Notes:
+•	Create a separate, detailed Privacy Policy to clarify CCPA rights, data processing, and third-party integrations.
+•	You might want to specify dispute resolution and governing law (e.g., “State of California”).
+•	If you use third-party APIs or data sources, mention third-party terms.
+•	Ensure compliance with payment regulations for refunds and cancellations.
+•	Incorporate accessibility and non-discrimination statements if relevant.
+If you want a more detailed Privacy Policy or wish to add/remove any section, provide specifics!

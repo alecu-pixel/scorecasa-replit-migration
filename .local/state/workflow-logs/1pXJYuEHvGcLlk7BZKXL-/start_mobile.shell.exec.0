@@ -1,0 +1,43 @@
+[1G[0K[90mStarting project at /home/runner/workspace/mobile[39m
+[143D[2K[2mStarting Metro Bundler[22m
+[33mThe following packages should be updated for best compatibility with the installed [1mexpo[22m version:[39m
+[33m  [1m@expo/vector-icons[22m[36m@[39m[33m[31m14.1.0[39m[33m - expected version: [32m~14.0.4[39m[33m[39m
+[33m  [1mexpo-font[22m[36m@[39m[33m[31m12.0.10[39m[33m - expected version: [32m~13.0.4[39m[33m[39m
+[33m  [1mexpo-secure-store[22m[36m@[39m[33m[31m13.0.2[39m[33m - expected version: [32m~14.0.1[39m[33m[39m
+[33m  [1mexpo-splash-screen[22m[36m@[39m[33m[31m0.27.7[39m[33m - expected version: [32m~0.29.24[39m[33m[39m
+[33mYour project may not work correctly until you install the expected versions of the packages.[39m
+[143D[2K▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █ ██▀▀▄▀▄██ ▄▄▄▄▄ █
+█ █   █ █  ▀█ ▀▄█▀█ █   █ █
+█ █▄▄▄█ █▀  █▄ █▄██ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄█ ▀▄█▄█▄█▄▄▄▄▄▄▄█
+█  █▀▄▄▄███▄█▄█▄▀▄██ ▀▄▄ ▄█
+█ ▄▀▀▄▄▄▄▄ ▄█▀▄█▄ ▀ █▄  ▀██
+█  ▄▄▄▀▄▀▀▀▀▄▀█▄▀▄▀▄▀▀▄ ▀██
+████ ▀▄▄▀▄▄▀ ▄██ ▀▄▀ ▄ ▀███
+█▄▄██▄█▄▄  ██▄▀▄▀ ▄▄▄ ▀ ▄▄█
+█ ▄▄▄▄▄ █▀▄ █▀██▀ █▄█ ▀▀▀██
+█ █   █ █▄ █▄ █▄█ ▄ ▄▄▀ ▀▀█
+█ █▄▄▄█ █▀█▄ ▄██▀█▀▄▀█▀▀ ██
+█▄▄▄▄▄▄▄█▄▄▄███▄██▄▄▄▄▄▄▄▄█
+
+[143D[2K› Metro waiting on [4mexp://172.31.126.34:8081[24m
+[143D[2K› Scan the QR code above with Expo Go (Android) or the Camera app (iOS)
+[143D[2K
+[143D[2K› Web is waiting on [4mhttp://localhost:8081[24m
+[143D[2K
+[143D[2K› Using [36mExpo Go[39m
+[143D[2K› Press [1ms[22m [2m│[22m switch to development build
+
+› Press [1ma[22m [2m│[22m open Android
+› Press [1mw[22m [2m│[22m open web
+
+› Press [1mj[22m [2m│[22m open debugger
+› Press [1mr[22m [2m│[22m reload app
+› Press [1mm[22m [2m│[22m toggle menu
+› [1mshift+m[22m [2m│[22m more tools
+› Press [1mo[22m [2m│[22m open project code in your editor
+
+[143D[2K› Press [1m?[22m [2m│[22m show all commands
+[143D[2K
+[143D[2KLogs for your project will appear below.[2m Press Ctrl+C to exit.[22m

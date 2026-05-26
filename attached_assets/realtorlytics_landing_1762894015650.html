@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtorlytics - Know Before You Buy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        .nav-buttons button {
+            margin-left: 15px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-login {
+            background: transparent;
+            color: #2563eb;
+        }
+        
+        .btn-signup {
+            background: #2563eb;
+            color: white;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            opacity: 0.95;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-buttons {
+            margin-top: 40px;
+        }
+        
+        .hero-buttons button {
+            padding: 15px 35px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        /* Problem Section */
+        .problem-section {
+            padding: 60px 0;
+            background: #f9fafb;
+        }
+        
+        .problem-section h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 50px;
+            color: #1f2937;
+        }
+        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .problem-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+        
+        .problem-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .problem-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .problem-card p {
+            color: #6b7280;
+            font-size: 15px;
+        }
+        
+        /* Metrics Section */
+        .metrics-section {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .metrics-section h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .metrics-subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 50px;
+            font-size: 18px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 30px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .metric-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+        }
+        
+        .metric-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .metric-card h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .metric-card p {
+            color: #6b7280;
+            font-size: 15px;
+        }
+        
+        /* Data Sources */
+        .data-sources {
+            padding: 60px 0;
+            background: #f9fafb;
+        }
+        
+        .data-sources h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+        
+        .data-sources-subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 50px;
+        }
+        
+        .sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        
+        .source-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .source-card h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #2563eb;
+        }
+        
+        .source-card p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        /* Pricing Section */
+        .pricing-section {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .pricing-section h2 {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+        
+        .pricing-subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 50px;
+            font-size: 18px;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .pricing-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .pricing-card.featured {
+            border-color: #2563eb;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        }
+        
+        .pricing-card h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .price {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2563eb;
+            margin: 20px 0;
+        }
+        
+        .price span {
+            font-size: 18px;
+            color: #6b7280;
+        }
+        
+        .features-list {
+            list-style: none;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .features-list li {
+            padding: 10px 0;
+            color: #4b5563;
+            font-size: 15px;
+        }
+        
+        .features-list li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .pricing-button {
+            width: 100%;
+            padding: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .pricing-card:not(.featured) .pricing-button {
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .cta-section h2 {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .cta-section p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+        
+        .cta-button {
+            padding: 15px 40px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        /* Footer */
+        footer {
+            background: #1f2937;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        footer p {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="container">
+            <div class="logo">🏡 Realtorlytics</div>
+            <div class="nav-buttons">
+                <button class="btn-login">Login</button>
+                <button class="btn-signup">Sign Up</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Know Before You Buy</h1>
+            <p>Your first home is your biggest investment. Make sure you understand the neighborhood, not just the house. Get instant property intelligence powered by official US data.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary">Get Started Free</button>
+                <button class="btn-secondary">See Sample Report</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="problem-section">
+        <div class="container">
+            <h2>Buying Your First Home Shouldn't Feel Like Gambling</h2>
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="problem-icon">🤔</div>
+                    <h3>New to the Area?</h3>
+                    <p>You don't have local knowledge about which neighborhoods are thriving and which are declining.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">😰</div>
+                    <h3>Overwhelmed by Data?</h3>
+                    <p>Census data, crime stats, school ratings scattered across dozens of websites.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">🏘️</div>
+                    <h3>Can't Trust Everything?</h3>
+                    <p>Realtors have incentives. Online reviews are mixed. You need objective facts.</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">💸</div>
+                    <h3>One Mistake = $50K Loss</h3>
+                    <p>A beautiful house in the wrong neighborhood can destroy your investment.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Metrics Section -->
+    <section class="metrics-section">
+        <div class="container">
+            <h2>Everything You Need to Know in One Simple Score</h2>
+            <p class="metrics-subtitle">We analyze 6 critical factors so you can make confident decisions</p>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <h3>Market Strength</h3>
+                    <p>Is this area growing or declining? Track property value trends over time.</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">👥</div>
+                    <h3>Demographics</h3>
+                    <p>Income levels, age distribution, population growth patterns in the neighborhood.</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🎓</div>
+                    <h3>School Quality</h3>
+                    <p>Understand school district ratings even if you don't have kids yet.</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🏠</div>
+                    <h3>Rental Potential</h3>
+                    <p>Need flexibility? See if you could rent this property in the future.</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🛡️</div>
+                    <h3>Safety Score</h3>
+                    <p>Real crime data and safety trends for the exact neighborhood.</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🚶</div>
+                    <h3>Walkability</h3>
+                    <p>Proximity to amenities, transit options, and quality of life factors.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Sources -->
+    <section class="data-sources">
+        <div class="container">
+            <h2>Powered by Official, Trusted Sources</h2>
+            <p class="data-sources-subtitle">All data comes from verified government and authoritative sources</p>
+            <div class="sources-grid">
+                <div class="source-card">
+                    <h4>US Census Bureau</h4>
+                    <p>Demographics, income, population trends, and employment data.</p>
+                </div>
+                <div class="source-card">
+                    <h4>GreatSchools</h4>
+                    <p>Comprehensive school ratings and district performance data.</p>
+                </div>
+                <div class="source-card">
+                    <h4>FBI Crime Data</h4>
+                    <p>Official crime statistics and safety metrics by neighborhood.</p>
+                </div>
+                <div class="source-card">
+                    <h4>Walk Score & Transit Data</h4>
+                    <p>Walkability scores and public transportation accessibility.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section">
+        <div class="container">
+            <h2>Simple, Transparent Pricing</h2>
+            <p class="pricing-subtitle">Choose the plan that fits your home search journey</p>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Essential</h3>
+                    <div class="price">$10<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>5 property reports per month</li>
+                        <li>Complete neighborhood analysis</li>
+                        <li>6 key metrics & scores</li>
+                        <li>Official Census data access</li>
+                        <li>School & safety ratings</li>
+                    </ul>
+                    <button class="pricing-button">Start Essential</button>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>Professional</h3>
+                    <div class="price">$20<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>Unlimited property reports</li>
+                        <li>Side-by-side comparisons</li>
+                        <li>5-year trend analysis</li>
+                        <li>Rental potential calculator</li>
+                        <li>Priority support</li>
+                        <li>Export detailed PDFs</li>
+                    </ul>
+                    <button class="pricing-button">Start Professional</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Make Your Next Property Decision with Confidence</h2>
+            <p>Join hundreds of smart buyers who research before they commit</p>
+            <button class="cta-button">Get Your First Report Free</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Realtorlytics. Empowering smarter property decisions.</p>
+        </div>
+    </footer>
+</body>
+</html>

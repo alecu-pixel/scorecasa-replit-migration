@@ -1,0 +1,138 @@
+Create a modern, memorable logo for ScoreCasa, a real estate scoring and analysis platform. The logo should communicate trust, growth, data-driven insights, and home ownership in a clean, professional manner.
+Logo Composition
+Icon Element
+
+House Symbol: Simplified geometric house icon
+
+Golden yellow/amber fill (#FFB800 or #FFC107)
+Minimalist design with clean lines
+Slight perspective or 3D effect (optional subtle shading)
+
+
+Arrow Element: Upward trending arrow emerging from the house
+
+Bright cyan/turquoise color (#00D9FF or #00B8D4)
+Positioned at the top-right of the house, appearing to "break out" or extend from the roof
+Symbolizes growth, upward trends, and increasing property value
+Smooth, rounded arrow design with clean geometry
+
+
+
+Typography
+
+"Score": White or off-white (#FFFFFF or #F8F9FA)
+
+Bold, modern sans-serif typeface (e.g., Inter Bold, Montserrat Bold, or DM Sans Bold)
+Clean, professional letterforms
+
+
+"Casa": Bright cyan matching the arrow (#00D9FF)
+
+Same typeface and weight as "Score"
+Creates visual connection between the arrow icon and brand name
+"Casa" (Spanish for "home") reinforces the real estate focus
+
+
+
+Layout
+
+Icon positioned to the left
+Wordmark positioned to the right of the icon
+Optical alignment ensuring visual balance
+Adequate spacing between icon and text (approximately 0.5x the icon width)
+Single-line horizontal layout for primary usage
+
+Color Palette
+
+Primary Yellow: #FFB800 to #FFC107 (house icon)
+Primary Cyan: #00D9FF to #00B8D4 (arrow and "Casa" text)
+White: #FFFFFF ("Score" text)
+Dark Background: #1a1530 or #0f0f1e (for primary usage on dark backgrounds)
+
+Logo Variations Needed
+Primary Logo
+
+Full color on dark background (as shown)
+Icon + full wordmark
+
+Secondary Variations
+
+White/monochrome version for light backgrounds
+Icon-only version (square format for social media, favicons)
+Stacked version (icon above text) for vertical layouts
+All-white version for single-color applications
+
+Style Guidelines
+Design Principles
+
+Modern & Tech-Forward: Clean lines, geometric shapes, contemporary typography
+Trustworthy: Professional appearance, balanced composition
+Optimistic: Upward arrow conveys positive momentum and growth
+Accessible: Clear, legible at all sizes from favicon (16px) to billboard
+
+Technical Specifications
+
+Vector Format: Design in vector (SVG, AI, EPS) for infinite scalability
+Minimum Size: Legible at 24px height
+Clear Space: Maintain clear space around logo equal to the height of the house icon
+Alignment: Optically centered and balanced
+
+Icon Design Details
+House Construction
+
+Simple geometric house shape
+Peaked roof with clean angles (approximately 45-60° roof pitch)
+Square or rectangular base
+No windows, doors, or excessive detail
+Slightly rounded corners (1-2px radius) for a softer, modern feel
+
+Arrow Construction
+
+Smooth, flowing line with rounded ends
+Arrow head at 45° angle
+Stroke width proportional to house outline (if house has outline)
+Appears to emerge naturally from the roof peak
+Creates dynamic diagonal movement
+
+Typography Specifications
+
+Font Weight: Bold (700) or Semi-Bold (600)
+Letter Spacing: Slightly tight (-0.02em to -0.04em) for modern feel
+X-Height: Generous for readability
+Recommended Fonts:
+
+Inter Bold
+Montserrat Bold
+DM Sans Bold
+Poppins SemiBold
+Work Sans Bold
+
+
+
+Usage Context
+
+Primary usage on dark navy/purple backgrounds
+Navigation headers
+Marketing materials
+Digital products (web, mobile apps)
+Print materials (business cards, signage)
+Social media profiles
+
+Brand Personality
+
+Professional: Trustworthy and credible in real estate market
+Innovative: Tech-forward approach to property analysis
+Optimistic: Growth-oriented and positive
+Approachable: Clean, friendly design without being overly corporate
+Data-Driven: Analytical and precise
+
+Deliverables
+
+SVG (primary format)
+PNG (transparent background, @1x, @2x, @3x)
+Favicon versions (16x16, 32x32, 64x64)
+Social media profile images (square icon format)
+Reversed/white version for light backgrounds
+Brand guidelines document with color codes, spacing rules, and usage examples
+
+The final logo should work seamlessly across digital and print applications while maintaining clarity and impact at any size.

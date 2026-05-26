@@ -1,0 +1,121 @@
+Create a horizontal logo lockup for ScoreCasa with precise dimensions optimized for website headers and digital applications.
+Exact Dimensions & Specifications
+Overall Logo Dimensions
+
+Total Width: 280-300px
+Total Height: 60-70px
+Aspect Ratio: Approximately 4.2:1 (horizontal rectangle)
+Format: Horizontal lockup suitable for navigation bars
+
+Icon Specifications
+
+House Icon Size: 50x50px to 55x55px (square bounding box)
+House Color: Golden yellow (#FFB800 to #FFC107)
+Arrow Color: Bright cyan (#00D9FF)
+Arrow Position: Emerging from top-right corner of house at approximately 45° angle
+Icon Style: Flat, minimalist geometric design with clean edges
+
+Typography Specifications
+
+"Score" Text:
+
+Color: White (#FFFFFF)
+Font Size: 32-36px
+Weight: Bold (700)
+Letter-spacing: -0.5px to -1px
+
+
+"Casa" Text:
+
+Color: Bright cyan (#00D9FF) matching the arrow
+Font Size: 32-36px (same as "Score")
+Weight: Bold (700)
+Letter-spacing: -0.5px to -1px
+
+
+
+Spacing & Alignment
+
+Icon to Text Spacing: 12-16px horizontal gap between house icon and "Score" text
+Vertical Alignment: Icon and text centered vertically on the same baseline/center axis
+Text Kerning: Minimal spacing between "Score" and "Casa" (2-4px)
+Clear Space: Minimum 10px padding on all sides of logo
+
+Background & Context
+Primary Usage
+
+Background Color: Dark navy/purple (#1a1530 or #0f0f1e)
+Container Height: 70-80px (typical header height)
+Logo Position: Typically left-aligned in navigation bar
+
+Canvas Settings
+
+Artboard Size: 300px x 70px
+Export Size: 300px x 70px @1x, 600px x 140px @2x, 900px x 210px @3x
+Format: PNG with transparent background, SVG for scalability
+
+Design Elements
+House Icon Details
+
+Simple geometric house shape
+Rounded corners: 2-3px radius
+Filled solid color (no stroke/outline)
+Roof peak at center-top
+Base approximately 70% of total height
+
+Arrow Details
+
+Stroke width: 5-6px
+Rounded ends (round line caps)
+Arrow head angle: 45°
+Length: Extends approximately 15-20px beyond house boundary
+Style: Modern, minimal, flowing line
+
+Typography Details
+
+Recommended Fonts: Inter Bold, Montserrat Bold, DM Sans Bold
+Baseline Alignment: Optically centered with icon
+No Underlines: Clean, straightforward presentation
+Anti-aliasing: Enabled for smooth rendering
+
+Technical Specifications
+File Requirements
+
+Primary Format: SVG (vector, infinitely scalable)
+Raster Exports:
+
+PNG @1x: 300 x 70px
+PNG @2x: 600 x 140px (for Retina displays)
+PNG @3x: 900 x 210px (for high-DPI displays)
+
+
+Background: Transparent
+Color Profile: sRGB
+
+Responsive Behavior
+
+At mobile sizes (< 600px): Maintain full logo or scale proportionally
+At very small sizes (< 400px): Consider icon-only version
+Minimum legible size: 200px width
+
+Visual Hierarchy
+
+Icon serves as visual anchor on the left
+"Score" and "Casa" are equal weight, with cyan "Casa" creating color connection to arrow
+Arrow adds dynamic movement and draws eye from house to wordmark
+
+Quality Standards
+
+Crisp edges at all sizes
+Proper optical alignment (not just mathematical centering)
+Consistent stroke weights
+Balanced negative space
+Professional kerning and letter spacing
+
+Usage Context
+
+Website header/navigation bar (primary use case)
+Email signatures at this specific size
+Digital presentations
+Social media cover images
+Partner/integration pages

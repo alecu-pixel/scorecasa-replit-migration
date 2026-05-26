@@ -1,0 +1,40 @@
+[1G[0K⠙[1G[0K
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K⠙[1G[0K4:38:32 AM [express] serving on port 5000
+[Data Pipeline Scheduler] Starting scheduler...
+4:38:37 AM [express] Data pipeline scheduler started (hourly checks)
+[Data Pipeline Scheduler] fred_mortgage_rates needs initial download
+[Data Pipeline Scheduler] bls_employment_data is overdue, running update
+[BLS Pipeline] Starting employment data download...
+[BLS Pipeline] Downloaded 1428 new employment records, 2652 total in DB
+[Data Pipeline Scheduler] census_building_permits is overdue, running update
+[Census Permits Pipeline] Starting building permits download from Census BPS CSV files...
+[Census Permits Pipeline] Fetching year 2024 from https://www2.census.gov/econ/bps/State/st2024a.txt...
+[Census Permits Pipeline] Fetching year 2023 from https://www2.census.gov/econ/bps/State/st2023a.txt...
+[Census Permits Pipeline] Fetching year 2022 from https://www2.census.gov/econ/bps/State/st2022a.txt...
+[Census Permits Pipeline] Downloaded 150 new permit records, 400 total in DB
+[Data Pipeline Scheduler] hud_fair_market_rent needs initial download
+[Data Pipeline Scheduler] zillow_home_value_forecast is overdue, running update
+[Zillow] Starting home value forecast download...
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/zhvf_growth/Zip_zhvf_growth_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/zhvf_growth/Metro_zhvf_growth_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv
+[Zillow] Parsed 20135 ZIP forecasts, 895 Metro forecasts
+[Zillow] Successfully inserted 21030 home value forecast records
+[Data Pipeline Scheduler] zillow_rent_forecast is overdue, running update
+[Zillow] Starting rent forecast download...
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/zorf_growth/National_zorf_growth_uc_sfr_sm_month.csv
+[Zillow] Parsed 1 rent forecast records
+[Zillow] Successfully inserted 1 rent forecast records
+[Data Pipeline Scheduler] zillow_market_metrics is overdue, running update
+[Zillow] Starting market metrics download...
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/mean_doz_pending/Metro_mean_doz_pending_uc_sfrcondo_sm_month.csv
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/mean_sale_to_list/Metro_mean_sale_to_list_uc_sfrcondo_sm_month.csv
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/invt_fs/Metro_invt_fs_uc_sfrcondo_sm_month.csv
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/mlp/Metro_mlp_uc_sfrcondo_sm_month.csv
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/pct_sold_above_list/Metro_pct_sold_above_list_uc_sfrcondo_sm_month.csv
+[Zillow] Fetching CSV from: https://files.zillowstatic.com/research/public_csvs/pct_sold_below_list/Metro_pct_sold_below_list_uc_sfrcondo_sm_month.csv
+[Zillow] Parsed market metrics: 787 regions
+[Zillow] Successfully inserted 928 market metrics records
+[Data Pipeline Scheduler] redfin_market_data is overdue, running update

@@ -1,0 +1,139 @@
+Transform an existing ScoreCasa web application with a modern, visually striking design system while preserving all current functionality and content structure. Apply contemporary styling, effects, and visual hierarchy to elevate the user experience.
+Design Philosophy
+Update the existing application to feel premium, data-driven, and futuristic while maintaining familiar layouts and navigation patterns. Focus on visual polish through lighting effects, gradients, and refined typography.
+Color System & Background
+
+Primary Background: Deep gradient from dark navy to teal-tinged navy (#1a1530 → #0f1f3d → #1a3a52)
+Gradient Direction: Left to right, with the teal/cyan influence increasing toward the right side
+Accent Colors:
+
+Primary: Bright cyan (#00d9ff) for interactive elements and key highlights
+Secondary: Vibrant purple/magenta (#a855f7, #d946ef) for CTAs and emphasis
+Tertiary: Electric blue accents for badges and status indicators
+
+
+
+Typography Updates
+
+Headlines: Bold, modern sans-serif (e.g., Inter, DM Sans, or similar)
+
+Large headlines: 56-72px, letter-spacing: -0.02em
+"Value" in cyan (#00d9ff), "of Home" in purple gradient (#a855f7 → #d946ef)
+
+
+Body Text: Light gray (#a0aec0) for readability on dark backgrounds
+Metric Numbers: Extra bold, 36-48px for emphasis
+Subtext: Muted gray (#64748b) at 14-16px
+
+Glow & Lighting Effects
+Hero Section Glow
+
+Primary Glow: Radial gradient emanating from the house icon
+
+Inner core: Cyan at 60% opacity, 200px radius
+Mid-range: Cyan at 30% opacity, 400px radius
+Outer ambient: Cyan at 8% opacity, 600px radius
+
+
+House Icon: Cyan stroke with subtle inner glow and outer shadow
+Apply filter: drop-shadow(0 0 40px rgba(0, 217, 255, 0.5))
+
+Badge & Status Indicators
+
+Small badges ("+4.2%", "Secure", "Elite", "+12% YoY"):
+
+Border: Cyan with 1px stroke
+Background: Semi-transparent with backdrop blur
+Glow: box-shadow: 0 0 20px rgba(0, 217, 255, 0.3)
+
+
+
+Card Components
+
+Background: Dark semi-transparent cards (#1e1e3f with 40% opacity)
+Border: Subtle 1px border in dark blue (#2d3a5e)
+Hover State: Increase border brightness to cyan, add soft glow
+Glass Effect: Apply backdrop-filter: blur(10px) for modern glassmorphism
+
+Component-Specific Updates
+Navigation Bar
+
+Dark background (#0f0f1e) with slight transparency
+White text (#ffffff) for main nav items
+Purple gradient button for "Login" (#a855f7 → #d946ef)
+Subtle bottom border or shadow for depth
+
+Search Input
+
+Dark background with light border (#2d3a5e)
+Rounded corners (24px border-radius for pill shape)
+Search icon in cyan
+AI badge in bright cyan with glow effect
+"Score It" button: Purple gradient with hover glow effect
+
+Metric Cards (Bottom Section)
+
+Dark card backgrounds with subtle borders
+Icon colors matching the design system (purple, cyan, magenta accents)
+Metric scores in extra-bold white typography
+Descriptions in muted gray
+Badge indicators with appropriate glow effects
+
+Icons & Illustrations
+
+Line-style icons with 2-3px stroke weight
+Primary icons in cyan (#00d9ff)
+Secondary icons in purple tones
+Apply subtle glow effects to active/important icons
+
+Interactive States
+Buttons
+
+Primary CTA: Purple gradient background with white text
+
+Hover: Increase brightness, add purple glow
+Active: Slightly darker with pressed effect
+
+
+Secondary: Cyan border with transparent background
+
+Hover: Fill with cyan, invert text color
+
+
+
+Cards
+
+Default: Subtle border, no glow
+Hover: Border brightens to cyan, soft glow appears
+Active/Selected: Stronger cyan border with prominent glow
+
+Spacing & Layout Preservation
+
+Maintain all existing spacing, margins, and padding
+Keep grid structures and responsive breakpoints
+Preserve content hierarchy and information architecture
+Update only visual styling, not structural layout
+
+Effects & Motion (Optional Enhancements)
+
+Subtle fade-in animations on page load
+Smooth transitions on hover states (200-300ms)
+Gentle pulsing effect on the hero glow (optional)
+Parallax or depth effects on scroll (optional)
+
+Technical Implementation Notes
+
+Use CSS custom properties for easy theme management
+Implement dark mode as the default (no light mode toggle needed)
+Ensure WCAG AA contrast ratios despite dark theme
+Optimize glow effects for performance (use CSS filters sparingly)
+Consider using CSS backdrop-filter with fallbacks
+
+Brand Consistency
+
+Maintain ScoreCasa logo and brand identity
+Keep all existing copy and messaging
+Preserve data visualization and metrics display
+Update only the visual presentation layer
+
+The goal is to make the existing application feel like a premium, next-generation product through sophisticated visual design while keeping all functionality and content intact.

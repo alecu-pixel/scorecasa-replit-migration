@@ -1,0 +1,14 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K4:19:46 AM [express] serving on port 5000
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+[Data Pipeline Scheduler] Starting scheduler...
+4:19:51 AM [express] Data pipeline scheduler started (hourly checks)
+4:19:53 AM [express] GET /api/auth/user 200 in 2ms
+4:19:53 AM [express] GET /api/early-bird/stats 200 in 29ms :: {"totalUsers":35,"earlyBirdCount":18,"…
+[Data Pipeline Scheduler] fred_mortgage_rates needs initial download
+[Data Pipeline Scheduler] hud_fair_market_rent needs initial download
+4:20:04 AM [express] GET /api/login 302 in 57ms
