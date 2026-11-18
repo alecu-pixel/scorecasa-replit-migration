@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Users, GraduationCap, Shield, MapPin, DollarSign, Home, Sparkles, Clock, Target, LineChart, Building } from 'lucide-react';
+import { TrendingUp, Users, GraduationCap, Shield, MapPin, DollarSign, Home, Lightbulb as Sparkles, Clock, Target, LineChart, Building } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import { useLocation } from 'wouter';
 import Logo from '@/components/Logo';
@@ -671,14 +671,13 @@ export default function Demo() {
         {/* Demo Banner */}
         <section className="py-8">
           <div className="glass-card p-6 text-center rounded-lg border-cyan-500/30 glow-cyan-sm">
-            <Badge className="mb-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0" data-testid="badge-demo">
+            <Badge className="mb-3 bg-purple-400 text-gray-950 border-0" data-testid="badge-demo">
               <Sparkles className="w-3 h-3 mr-1" />
-              Demo Report
+              Sample report
             </Badge>
-            <h2 className="text-2xl font-bold mb-2 text-white">Sample Property Analysis</h2>
+            <h2 className="text-2xl font-bold mb-2 text-white">What a ScoreCasa report looks like</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              This is a sample analysis showing what you'll receive for any US property. 
-              Real reports use live data from Census Bureau, OpenStreetMap, Zillow Research Data, RentCast, and Urban Institute—including 1-year forecasts.
+              This is a real-format example. Your report for any U.S. address has the same sections, filled in with current data from the Census Bureau, FEMA, USGS, Zillow Research, OpenStreetMap and more.
             </p>
           </div>
         </section>
@@ -709,7 +708,7 @@ export default function Demo() {
         {demoData.forecastData && (
           <section className="pb-8">
             <div className="flex items-center gap-2 mb-4">
-              <Badge className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0">
+              <Badge className="bg-purple-400 text-gray-950 border-0">
                 <LineChart className="w-3 h-3 mr-1" />
                 NEW
               </Badge>
@@ -1100,10 +1099,10 @@ export default function Demo() {
         <section className="py-12 border-t border-gray-800 hero-glow">
           <div className="text-center max-w-2xl mx-auto relative z-10">
             <h3 className="text-3xl font-bold mb-4 text-white">
-              Ready to Analyze <span className="text-gradient-cyan">Your</span> Property?
+              Want this for the home you’re looking at?
             </h3>
             <p className="text-lg text-gray-400 mb-6">
-              Get the same comprehensive analysis for any US property. Start with just $10 for 5 searches.
+              Your first 2 reports are free while early-bird spots last. After that, 5 reports cost $10.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button 
@@ -1112,15 +1111,15 @@ export default function Demo() {
                 onClick={() => setLocation('/pricing')} 
                 data-testid="button-cta-pricing"
               >
-                View Pricing
+                See pricing
               </Button>
               <Button 
                 size="lg" 
                 className="btn-outline-cyan"
-                onClick={() => window.location.href = '/api/login'} 
+                onClick={() => window.location.href = '/login?mode=signup'} 
                 data-testid="button-cta-login"
               >
-                Log In to Start
+                Create a free account
               </Button>
             </div>
           </div>
@@ -1159,7 +1158,7 @@ export default function Demo() {
               </a>
             </div>
             <p className="text-xs text-gray-600">
-              This tool provides data-driven insights to support your decisions, not financial advice.
+              ScoreCasa is a research tool, not financial, legal or real estate advice.
             </p>
             <p className="text-sm text-gray-500">
               &copy; 2025 ScoreCasa

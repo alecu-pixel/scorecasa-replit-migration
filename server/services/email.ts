@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_not_configured');
 
 const SHARED_STYLES = `
   body {
@@ -19,7 +19,7 @@ const SHARED_STYLES = `
     border: 1px solid #e5e7eb;
   }
   .header {
-    background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+    background: #1f4d3a;
     color: white;
     padding: 36px 30px;
     text-align: center;
@@ -44,8 +44,8 @@ const SHARED_STYLES = `
     font-size: 15px;
   }
   .highlight-box {
-    background: #f5f3ff;
-    border: 1px solid #ede9fe;
+    background: #f4efe6;
+    border: 1px solid #e7dccb;
     border-radius: 8px;
     padding: 20px 24px;
     margin: 24px 0;
@@ -53,7 +53,7 @@ const SHARED_STYLES = `
   .highlight-box .stat {
     font-size: 32px;
     font-weight: 800;
-    color: #7c3aed;
+    color: #1f4d3a;
     line-height: 1;
   }
   .highlight-box .stat-label {
@@ -63,7 +63,7 @@ const SHARED_STYLES = `
   }
   .cta-button {
     display: inline-block;
-    background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+    background: #1f4d3a;
     color: white !important;
     padding: 14px 32px;
     text-decoration: none;
@@ -137,7 +137,7 @@ export async function sendContactFormEmail(data: ContactFormEmail): Promise<void
               .label { font-weight: 600; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
               .value { background: white; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; }
               .message-content { white-space: pre-wrap; word-wrap: break-word; }
-              .reply-button { display: inline-block; background: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
+              .reply-button { display: inline-block; background: #1f4d3a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
             </style>
           </head>
           <body>
@@ -153,7 +153,7 @@ export async function sendContactFormEmail(data: ContactFormEmail): Promise<void
                 </div>
                 <div class="field">
                   <div class="label">Email</div>
-                  <div class="value"><a href="mailto:${data.email}" style="color: #7c3aed; text-decoration: none;">${data.email}</a></div>
+                  <div class="value"><a href="mailto:${data.email}" style="color: #1f4d3a; text-decoration: none;">${data.email}</a></div>
                 </div>
                 <div class="field">
                   <div class="label">Subject</div>
@@ -275,10 +275,10 @@ export async function sendPurchaseConfirmationEmail(data: PurchaseConfirmationEm
                   </tr>
                   <tr>
                     <td style="padding:10px 0;color:#6b7280;font-size:14px;">Amount paid</td>
-                    <td style="padding:10px 0;text-align:right;font-weight:700;font-size:15px;color:#7c3aed;">${amountFormatted}</td>
+                    <td style="padding:10px 0;text-align:right;font-weight:700;font-size:15px;color:#1f4d3a;">${amountFormatted}</td>
                   </tr>
                 </table>
-                <p>Each credit gives you a full investment analysis for one property — including scores across 6 key metrics, AI-powered outlook, affordability analysis, flood risk, and comparable sales.</p>
+                <p>Each credit gives you a full investment analysis for one property — including scores across 6 key metrics, a written market outlook, affordability analysis, flood risk, and comparable sales.</p>
                 <a href="https://scorecasa.com/dashboard" class="cta-button">Analyze a Property Now</a>
                 <hr class="divider" />
                 <p style="font-size:13px;color:#6b7280;">Questions about your purchase? Reply to this email and we'll help you out.</p>
@@ -294,4 +294,41 @@ export async function sendPurchaseConfirmationEmail(data: PurchaseConfirmationEm
   } catch (error) {
     console.error('❌ Failed to send purchase confirmation email:', error);
   }
+}
+
+interface PasswordResetEmail {
+  email: string;
+  firstName: string | null;
+  resetUrl: string;
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetEmail): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`[Email] RESEND_API_KEY not set. Reset link for ${data.email}: ${data.resetUrl}`);
+    return;
+  }
+  const greeting = data.firstName ? `Hi ${data.firstName},` : 'Hi,';
+  await resend.emails.send({
+    from: 'ScoreCasa <contact@scorecasa.com>',
+    to: data.email,
+    subject: 'Set your ScoreCasa password',
+    html: `
+      <!DOCTYPE html>
+      <html><head><meta charset="utf-8"><style>${SHARED_STYLES}</style></head>
+      <body>
+        <div class="wrapper">
+          <div class="header"><div class="logo">ScoreCasa</div><h1>Set your password</h1></div>
+          <div class="content">
+            <p style="font-size:16px;font-weight:600;">${greeting}</p>
+            <p>Someone (hopefully you) asked to set or reset the password for your ScoreCasa account. Click below to choose a new one. The link works for one hour.</p>
+            <a href="${data.resetUrl}" class="cta-button">Choose a password</a>
+            <hr class="divider" />
+            <p style="font-size:13px;color:#6b7280;">If you didn't ask for this, you can ignore this email. Your account stays as it is.</p>
+          </div>
+        </div>
+        <div class="footer">&copy; ${new Date().getFullYear()} ScoreCasa · scorecasa.com</div>
+      </body></html>
+    `,
+    text: `${greeting}\n\nSet or reset your ScoreCasa password here (valid for one hour):\n${data.resetUrl}\n\nIf you didn't ask for this, ignore this email.`,
+  });
 }

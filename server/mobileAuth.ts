@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { storage } from "./storage";
 import { z } from "zod";
 
-const JWT_SECRET = process.env.SESSION_SECRET || process.env.JWT_SECRET;
+const JWT_SECRET = (process.env.SESSION_SECRET || process.env.JWT_SECRET) as string;
 if (!JWT_SECRET) {
   throw new Error("[Mobile Auth] FATAL: SESSION_SECRET or JWT_SECRET environment variable must be set for JWT authentication.");
 }
@@ -48,23 +48,9 @@ export function registerMobileAuthRoutes(app: import("express").Express) {
           return res.status(409).json({ error: "An account with this email already exists. Please log in instead." });
         }
 
-        await storage.setUserPassword(existing.id, hashedPassword);
-        const updatedUser = await storage.getUserById(existing.id);
-        const user = updatedUser || existing;
-
-        const token = generateToken(user.id);
-        return res.status(200).json({
-          token,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            creditBalance: user.creditBalance ?? 0,
-            isAdmin: user.isAdmin ?? 0,
-          },
-          accountLinked: true,
-        });
+        // Account exists from the old sign-in and has no password yet. Don't let anyone
+        // claim it just by knowing the email: the owner must use "forgot password".
+        return res.status(409).json({ error: "You already have a ScoreCasa account. Use \"Forgot password\" on scorecasa.com to set a password.", code: "needs_reset" });
       }
 
       const result = await storage.upsertUserWithEarlyBirdCheck({

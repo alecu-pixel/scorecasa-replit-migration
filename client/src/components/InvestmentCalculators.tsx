@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Slider } from '@/components/ui/slider';
-import { Calculator, TrendingUp, DollarSign, Target, HelpCircle, Sparkles, AlertCircle, CheckCircle2, ShieldAlert, AlertTriangle, BookOpen } from 'lucide-react';
+import { Calculator, TrendingUp, DollarSign, Target, HelpCircle, Lightbulb as Sparkles, AlertCircle, CheckCircle2, ShieldAlert, AlertTriangle, BookOpen } from 'lucide-react';
 import type { PropertyAnalysisResult } from '@shared/schema';
 
 interface InvestmentCalculatorsProps {

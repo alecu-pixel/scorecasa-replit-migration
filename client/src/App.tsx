@@ -14,6 +14,15 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import InvestorToolkit from "@/pages/InvestorToolkit";
 import NotFound from "@/pages/not-found";
+import Login from "@/pages/Login";
+
+function LoginPage() {
+  return <Login />;
+}
+
+function ResetPassword() {
+  return <Login initialMode="reset" />;
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,6 +32,8 @@ function Router() {
       {isLoading || !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
+          <Route path="/login" component={LoginPage} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/demo" component={Demo} />
           <Route path="/contact" component={Contact} />
@@ -34,6 +45,8 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/login" component={Dashboard} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/demo" component={Demo} />
           <Route path="/admin" component={Admin} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { TrendingUp, Users, GraduationCap, Shield, MapPin, DollarSign, LogOut, Sparkles, History, Clock, ChevronDown, ChevronUp, RefreshCw, Eye, GitCompareArrows, Check, X, Star } from 'lucide-react';
+import { TrendingUp, Users, GraduationCap, Shield, MapPin, DollarSign, LogOut, Lightbulb as Sparkles, History, Clock, ChevronDown, ChevronUp, RefreshCw, Eye, GitCompareArrows, Check, X, Star } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { PropertyAnalysisResult, User } from '@shared/schema';
@@ -69,7 +69,7 @@ export default function Dashboard() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = '/api/login';
+        window.location.href = '/login';
       }, 500);
     }
   }, [isAuthenticated, authLoading, toast]);
@@ -169,7 +169,7 @@ export default function Dashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -297,14 +297,14 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <Logo className="h-10 w-auto" />
+              <Logo className="h-8 sm:h-10 w-auto" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3">
               {user && (
                 <>
                   <div className="text-sm">
                     <Badge className="badge-glow text-cyan-400 border-cyan-500/50 bg-cyan-500/10" data-testid="badge-credits">
-                      {user.creditBalance || 0} Credits
+                      {user.creditBalance || 0} credits
                     </Badge>
                   </div>
                   <Button 
@@ -313,7 +313,7 @@ export default function Dashboard() {
                     onClick={() => setLocation('/pricing')} 
                     data-testid="button-buy-credits"
                   >
-                    Buy Credits
+                    <span className="sm:hidden">Buy</span><span className="hidden sm:inline">Buy credits</span>
                   </Button>
                   {isAdmin && (
                     <Button 
@@ -332,9 +332,10 @@ export default function Dashboard() {
                     className="text-gray-400 hover:text-red-400 hover:bg-white/5"
                     onClick={() => window.location.href = '/api/logout'} 
                     data-testid="button-logout"
+                    aria-label="Log out"
                   >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Log Out
+                    <LogOut className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Log out</span>
                   </Button>
                 </>
               )}
@@ -356,15 +357,11 @@ export default function Dashboard() {
         {!showComparison && (<>
         <section className="py-12">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 badge-glow px-4 py-2 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-cyan-400">AI-Powered Analysis</span>
-            </div>
-            <h2 className="text-4xl font-bold mb-3 text-white">
-              Data-Driven Property <span className="text-gradient-cyan">Analysis</span>
+            <h2 className="text-4xl font-semibold mb-3 text-gray-50">
+              Which address are you looking at?
             </h2>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              Get comprehensive investment scores powered by real US Census data (2022-2023 ACS) and OpenStreetMap walkability metrics
+              Enter a full U.S. street address. Each report uses one credit and is saved to your history.
             </p>
           </div>
 
@@ -865,9 +862,9 @@ export default function Dashboard() {
               <div className="p-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 inline-block mb-6 pulse-glow">
                 <TrendingUp className="w-12 h-12 text-cyan-400 icon-glow" />
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">Ready to Analyze</h3>
+              <h3 className="text-xl font-semibold mb-2 text-white">Your report will appear here</h3>
               <p className="text-gray-400">
-                Enter a property address with a ZIP code to get real Census and walkability data
+                Schools, safety, flood risk, prices, rents and more, usually in under a minute.
               </p>
             </div>
           </section>
@@ -907,7 +904,7 @@ export default function Dashboard() {
               </a>
             </div>
             <p className="text-xs text-gray-600">
-              This tool provides data-driven insights to support your decisions, not financial advice.
+              ScoreCasa is a research tool, not financial, legal or real estate advice.
             </p>
             <p className="text-sm text-gray-500">
               &copy; 2025 ScoreCasa

@@ -39,7 +39,7 @@ export default function InvestorToolkit() {
               <Button
                 variant="ghost"
                 className="text-white/80 hover:text-white hover:bg-white/10"
-                onClick={() => window.location.href = '/api/login'}
+                onClick={() => window.location.href = '/login'}
                 data-testid="button-login"
               >
                 Log In
@@ -66,7 +66,7 @@ export default function InvestorToolkit() {
             Investor Toolkit
           </h1>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto animate-fade-in">
-            Free calculators and tools to help you make smarter real estate investment decisions
+            Free calculators for buyers and investors. No account needed.
           </p>
         </div>
       </section>
@@ -182,7 +182,7 @@ export default function InvestorToolkit() {
               </a>
             </div>
             <p className="text-xs text-gray-600">
-              This tool provides data-driven insights to support your decisions, not financial advice.
+              ScoreCasa is a research tool, not financial, legal or real estate advice.
             </p>
             <p className="text-sm text-gray-500">
               &copy; 2025 ScoreCasa

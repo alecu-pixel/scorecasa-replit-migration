@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, TrendingUp, ArrowLeft, Sparkles, CreditCard } from 'lucide-react';
+import { Check, TrendingUp, ArrowLeft, Lightbulb as Sparkles, CreditCard } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +23,7 @@ export default function Pricing() {
         description: "Please log in to choose a plan",
       });
       setTimeout(() => {
-        window.location.href = '/api/login';
+        window.location.href = '/login';
       }, 1000);
     }
   }, [isLoading, isAuthenticated, toast]);
@@ -46,7 +46,7 @@ export default function Pricing() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = '/api/login';
+          window.location.href = '/login';
         }, 500);
         return;
       }
@@ -109,35 +109,35 @@ export default function Pricing() {
               <span className="text-sm font-medium text-cyan-400">Secure Checkout</span>
             </div>
             <h2 className="text-4xl font-bold mb-4 text-white">
-              Buy Search <span className="text-gradient-cyan">Credits</span>
+              Buy report credits
             </h2>
             <p className="text-lg text-gray-400">
-              Purchase credits anytime • No monthly subscriptions • No limits
+              One credit = one full property report · No subscription · Credits never expire
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Starter Package */}
+            {/* Starter */}
             <Card className="relative glass-card card-glow-hover border-gray-700/50">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Starter Package</CardTitle>
+                <CardTitle className="text-2xl text-white">Starter</CardTitle>
                 <div className="mt-4">
                   <span className="text-4xl font-bold text-gradient-cyan metric-score">$10</span>
                   <span className="text-gray-400"> one-time</span>
                 </div>
                 <CardDescription className="mt-4 text-gray-400">
-                  Perfect for casual investors exploring opportunities
+                  For comparing a few homes you’re serious about
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-cyan-400" />
-                    <span className="font-semibold text-white">5 property search credits</span>
+                    <span className="font-semibold text-white">5 property reports</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-cyan-400" />
-                    <span className="text-gray-300">Complete 10+ metric analysis</span>
+                    <span className="text-gray-300">Schools, safety, flood risk, prices and rents</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-cyan-400" />
@@ -153,7 +153,7 @@ export default function Pricing() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-cyan-400" />
-                    <span className="text-gray-300">Real-time government data</span>
+                    <span className="text-gray-300">Sources listed for every number</span>
                   </li>
                 </ul>
                 <Button 
@@ -166,33 +166,33 @@ export default function Pricing() {
               </CardContent>
             </Card>
 
-            {/* Advanced Package */}
+            {/* Plus */}
             <Card className="relative glass-card card-glow-hover border-cyan-500/50 glow-cyan-sm">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0">
+                <Badge className="bg-purple-400 text-gray-950 border-0">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Best Value
                 </Badge>
               </div>
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Advanced Package</CardTitle>
+                <CardTitle className="text-2xl text-white">Plus</CardTitle>
                 <div className="mt-4">
                   <span className="text-4xl font-bold text-gradient-purple metric-score">$20</span>
                   <span className="text-gray-400"> one-time</span>
                 </div>
                 <CardDescription className="mt-4 text-gray-400">
-                  For active investors analyzing multiple properties
+                  For weighing several neighborhoods or a small portfolio
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-purple-400" />
-                    <span className="font-semibold text-white">12 property search credits</span>
+                    <span className="font-semibold text-white">12 property reports</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-purple-400" />
-                    <span className="text-gray-300">Complete 10+ metric analysis</span>
+                    <span className="text-gray-300">Schools, safety, flood risk, prices and rents</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-purple-400" />
@@ -208,7 +208,7 @@ export default function Pricing() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-purple-400" />
-                    <span className="text-gray-300">Real-time government data</span>
+                    <span className="text-gray-300">Sources listed for every number</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-5 h-5 text-purple-400" />
@@ -266,7 +266,7 @@ export default function Pricing() {
               </a>
             </div>
             <p className="text-xs text-gray-600">
-              This tool provides data-driven insights to support your decisions, not financial advice.
+              ScoreCasa is a research tool, not financial, legal or real estate advice.
             </p>
             <p className="text-sm text-gray-500">
               &copy; 2025 ScoreCasa

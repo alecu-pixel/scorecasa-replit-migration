@@ -1,0 +1,53 @@
+# Render Blueprint for ScoreCasa (web app + API in one Node service).
+# Database: use a Neon Postgres URL (free tier) in DATABASE_URL.
+services:
+  - type: web
+    name: scorecasa
+    runtime: node
+    plan: starter            # $7/month, always on. "free" works for testing but sleeps after 15 min.
+    region: ohio
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/early-bird/stats
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PUBLIC_URL
+        value: https://scorecasa.com
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: VITE_STRIPE_PUBLIC_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: CENSUS_API_KEY
+        sync: false
+      - key: RENTCAST_API_KEY
+        sync: false
+      - key: SCHOOLDIGGER_APP_ID
+        sync: false
+      - key: SCHOOLDIGGER_APP_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
+      - key: BLS_API_KEY
+        sync: false
+      - key: HUD_API_KEY
+        sync: false
+      - key: HUD_TOKEN
+        sync: false
+      - key: FBI_CRIME_API_KEY
+        sync: false
+      - key: DATA_GOV_API_KEY
+        sync: false

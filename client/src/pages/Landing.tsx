@@ -1,16 +1,95 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Home, MapPin, DollarSign, TrendingUp, Users, GraduationCap, 
-  Shield, Footprints, BarChart3, Database, CheckCircle2, HelpCircle,
-  AlertCircle, Target, Gift, Sparkles, Calculator, Building2,
-  Droplets, Activity, Wind
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Home, TrendingUp, Users, GraduationCap, Shield, Footprints, Droplets,
+  Building2, Calculator, Briefcase, ArrowRight, Check, MapPin, Gift, Scale,
+  FileText, Clock,
 } from 'lucide-react';
-import { FaFacebook, FaInstagram, FaXTwitter, FaTiktok } from 'react-icons/fa6';
+import { FaFacebook, FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import Logo from '@/components/Logo';
+
+const REPORT_ITEMS = [
+  { icon: TrendingUp, title: 'Prices & where they’re heading', body: 'Recent price trends, how fast homes sell, and a 1-year value and rent outlook from Zillow Research.' },
+  { icon: GraduationCap, title: 'Schools nearby', body: 'Ratings and details for the public schools that serve the address.' },
+  { icon: Shield, title: 'Safety', body: 'ZIP-level crime grades compared with state and national rates, plus a local crime map.' },
+  { icon: Droplets, title: 'Flood, earthquake & air', body: 'FEMA flood zone and past flood claims, USGS earthquake risk, and current air quality.' },
+  { icon: Footprints, title: 'Everyday convenience', body: 'How many shops, parks, clinics and transit stops are within walking distance.' },
+  { icon: Users, title: 'Who lives there', body: 'Income, age, education and population change from the U.S. Census.' },
+  { icon: Scale, title: 'Buy or rent?', body: 'Your monthly cost to own versus local rents, and whether prices look stretched for the area.' },
+  { icon: Briefcase, title: 'Local jobs', body: 'Unemployment trends and how many jobs are within reach of the home.' },
+  { icon: Calculator, title: 'Your numbers', body: 'Mortgage, cash-flow and cap-rate calculators filled in with the property’s data.' },
+];
+
+const SOURCES = [
+  ['U.S. Census Bureau', 'Demographics, income, building permits'],
+  ['FEMA', 'Flood zones and flood insurance claims'],
+  ['USGS', 'Earthquake hazard'],
+  ['Federal Reserve (FRED)', 'Mortgage rate trends'],
+  ['HUD', 'Fair market rents'],
+  ['Bureau of Labor Statistics', 'Employment'],
+  ['Zillow Research', 'Home value and rent forecasts'],
+  ['FBI crime statistics', 'State and national crime rates'],
+  ['SchoolDigger', 'School ratings'],
+  ['OpenStreetMap', 'Nearby places and amenities'],
+];
+
+const HOMEBUYER_WEIGHTS = [
+  ['Market strength', 25], ['Schools', 20], ['Neighborhood trends', 20],
+  ['Safety', 15], ['Walkability', 10], ['Rental potential', 10],
+] as const;
+
+const INVESTOR_WEIGHTS = [
+  ['Market strength', 30], ['Rental potential', 25], ['Neighborhood trends', 20],
+  ['Safety', 10], ['Walkability', 10], ['Schools', 5],
+] as const;
+
+const SAMPLE_BARS = [
+  ['Schools', 8.4], ['Safety', 7.1], ['Market strength', 7.9], ['Rental potential', 6.6], ['Walkability', 8.8],
+] as const;
+
+const FAQS = [
+  {
+    q: 'Where do the numbers come from?',
+    a: 'From public and well-known sources: the U.S. Census Bureau, FEMA, USGS, the Federal Reserve, HUD, the Bureau of Labor Statistics, Zillow Research and others. Every section of the report says which source it uses, so you can check it yourself.',
+  },
+  {
+    q: 'How is the 1–10 score worked out?',
+    a: 'Each area (schools, safety, market, rent, walkability, neighborhood trends) gets its own score. We combine them with fixed weights you can see on this page. You can switch between the "living there" and "renting it out" weighting at any time, and the report explains what pushed the score up or down.',
+  },
+  {
+    q: 'Is this financial advice?',
+    a: 'No. ScoreCasa is a research tool that pulls the facts together in one place. It doesn’t replace a home inspection, an appraisal, or advice from a licensed agent, lender or advisor.',
+  },
+  {
+    q: 'Which areas do you cover?',
+    a: 'Any residential address in the United States. Some sources (like school ratings or crime grades) can be thinner in very rural areas; the report tells you when data is limited.',
+  },
+  {
+    q: 'Do I need a subscription?',
+    a: 'No. You buy report credits once and use them whenever you like. Credits never expire. The calculators in the Free tools section need no account at all.',
+  },
+];
+
+function Weights({ rows, tone }: { rows: readonly (readonly [string, number])[]; tone: 'sage' | 'brass' }) {
+  const bar = tone === 'sage' ? 'bg-cyan-400' : 'bg-purple-400';
+  return (
+    <div className="space-y-2">
+      {rows.map(([label, pct]) => (
+        <div key={label} className="flex items-center gap-3 text-sm">
+          <span className="w-36 sm:w-40 text-gray-300">{label}</span>
+          <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+            <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct * 3.3}%` }} />
+          </div>
+          <span className="w-10 text-right text-gray-400 tabular-nums">{pct}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -21,1055 +100,347 @@ export default function Landing() {
     spotsRemaining: number;
   }>({
     queryKey: ['/api/early-bird/stats'],
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
+  const goSignup = () => setLocation('/login?mode=signup');
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-gray-300">
       {/* Header */}
       <header className="sticky top-0 z-50 nav-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <Logo className="h-10 w-auto" />
-            </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                className="text-white/80"
-                onClick={() => setLocation('/toolkit')} 
-                data-testid="button-toolkit"
-              >
-                Free Tools
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16 gap-2">
+            <a href="/" aria-label="ScoreCasa home"><Logo className="h-9 w-auto" /></a>
+            <nav className="flex items-center gap-1 sm:gap-2">
+              <Button variant="ghost" className="hidden md:inline-flex text-gray-300" onClick={() => setLocation('/demo')} data-testid="button-sample">
+                Sample report
               </Button>
-              <Button 
-                variant="ghost" 
-                className="text-white/80"
-                onClick={() => window.location.href = '/api/login'} 
-                data-testid="button-login"
-              >
-                Log In
+              <Button variant="ghost" className="hidden md:inline-flex text-gray-300" onClick={() => setLocation('/toolkit')} data-testid="button-toolkit">
+                Free tools
               </Button>
-              <Button 
-                className="btn-gradient-purple"
-                onClick={() => setLocation('/pricing')} 
-                data-testid="button-signup"
-              >
-                Sign Up
+              <Button variant="ghost" className="hidden sm:inline-flex text-gray-300" onClick={() => setLocation('/pricing')} data-testid="button-pricing">
+                Pricing
               </Button>
-            </div>
+              <Button variant="ghost" className="text-gray-300" onClick={() => setLocation('/login')} data-testid="button-login">
+                Log in
+              </Button>
+              <Button className="btn-gradient-purple" onClick={goSignup} data-testid="button-signup">
+                Get started
+              </Button>
+            </nav>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 hero-glow relative overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          {/* Floating badge */}
-          <div className="inline-flex items-center gap-2 badge-glow px-4 py-2 rounded-full mb-8 animate-fade-in">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span className="text-sm font-medium text-cyan-400">AI-Powered Property Intelligence</span>
-          </div>
-          
-          {/* Hero icon with glow */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-3xl scale-150"></div>
-              <div className="relative p-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 pulse-glow">
-                <Home className="w-16 h-16 text-cyan-400 icon-glow" />
-              </div>
+      {/* Hero */}
+      <section className="px-4 sm:px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-16 items-center">
+          <div className="fade-in">
+            <p className="inline-flex items-center gap-2 text-sm text-cyan-300 mb-6">
+              <MapPin className="w-4 h-4" /> For home buyers and small investors across the U.S.
+            </p>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-gray-50 leading-[1.08] mb-6">
+              Know the neighborhood <span className="italic text-purple-300">before</span> you buy the house.
+            </h1>
+            <p className="text-lg text-gray-300 leading-relaxed mb-8 max-w-xl">
+              Type in any U.S. address. In about a minute you get one clear score from 1 to 10 and a
+              readable report on schools, safety, flood risk, prices and rents — pulled from public
+              records, not sales pitches.
+            </p>
+            <div className="flex flex-wrap gap-3 mb-8">
+              <Button size="lg" className="btn-gradient-purple h-12 px-6 text-base" onClick={goSignup} data-testid="button-get-started">
+                Check an address <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <Button size="lg" variant="outline" className="btn-outline-cyan h-12 px-6 text-base" onClick={() => setLocation('/demo')} data-testid="button-see-demo">
+                See a sample report
+              </Button>
             </div>
-          </div>
-          
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight animate-fade-in">
-            See What Your <span className="text-gradient-cyan">Investment</span> Will Be Worth <span className="text-gradient-purple">Next Year</span>
-          </h1>
-          <p className="text-xl text-gray-400 mb-4 max-w-3xl mx-auto animate-fade-in">
-            Get 1-year home value forecasts, rent projections, and market velocity data before you buy. Whether you're a <span className="text-cyan-400 font-medium">first-time homebuyer</span> wanting to feel confident you're not overpaying, or a seasoned <span className="text-purple-400 font-medium">real estate investor</span> hunting for strong rental yield and appreciation — we give you the same institutional-grade intelligence, tailored to your goals.
-          </p>
-          <p className="text-base text-gray-500 mb-10 max-w-2xl mx-auto animate-fade-in">
-            Know if prices are rising or falling, how fast homes sell, whether renting beats buying, and what your property will be worth next year — powered by Zillow Research, BLS employment data, Census data, and 10+ real-time government sources.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap animate-fade-in">
-            <Button 
-              size="lg" 
-              className="btn-gradient-purple"
-              onClick={() => setLocation('/pricing')} 
-              data-testid="button-get-started"
-            >
-              Get Started
-            </Button>
-            <Button 
-              size="lg" 
-              className="btn-outline-cyan"
-              onClick={() => setLocation('/demo')} 
-              data-testid="button-see-demo"
-            >
-              See Demo
-            </Button>
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-400">
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-cyan-400" /> No subscription</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-cyan-400" /> Credits never expire</li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-cyan-400" /> Sources listed in every report</li>
+            </ul>
           </div>
 
-          {/* Two Modes Section */}
-          <div className="mt-12 mb-6">
-            <p className="text-sm text-gray-500 uppercase tracking-widest font-semibold mb-6">Two Modes. One Smarter Score.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-3xl mx-auto">
-              {/* Homebuyer Mode Card */}
-              <div className="flex-1 badge-glow rounded-xl p-5 text-left border border-cyan-500/20 bg-cyan-500/5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
-                    <Home className="w-5 h-5 text-cyan-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-sm">Homebuyer Mode</h3>
-                    <p className="text-cyan-400 text-xs">Prioritizes livability &amp; family factors</p>
-                  </div>
+          {/* Sample score card (illustrative) */}
+          <div className="relative fade-in" aria-label="Example ScoreCasa result">
+            <div className="glass-card rounded-2xl p-6 sm:p-8 shadow-2xl">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-500 mb-1">Example</p>
+                  <p className="text-gray-100 font-medium">1600 Congress Ave</p>
+                  <p className="text-sm text-gray-400">Austin, TX 78701</p>
                 </div>
-                <p className="text-gray-400 text-xs mb-4 leading-relaxed">
-                  Buying a home to live in? The score weights the factors that shape your daily life — great schools, safe streets, walkable neighborhoods, and a stable local market. Make your biggest purchase with total confidence.
-                </p>
-                <div className="space-y-1.5">
-                  <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-2">Score Weights</p>
-                  {[
-                    { label: 'Market Strength', pct: '25%', color: 'bg-cyan-500' },
-                    { label: 'School Quality', pct: '20%', color: 'bg-cyan-400' },
-                    { label: 'Demographic Trends', pct: '20%', color: 'bg-cyan-400' },
-                    { label: 'Safety Score', pct: '15%', color: 'bg-cyan-300' },
-                    { label: 'Walkability', pct: '10%', color: 'bg-cyan-300' },
-                    { label: 'Rental Potential', pct: '10%', color: 'bg-cyan-200' },
-                  ].map(({ label, pct, color }) => (
-                    <div key={label} className="flex items-center gap-2">
-                      <div className="flex-1 flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">{label}</span>
-                        <span className="text-gray-300 text-xs font-medium">{pct}</span>
-                      </div>
-                      <div className="w-16 h-1 rounded-full bg-gray-700/60 overflow-hidden">
-                        <div className={`h-full rounded-full ${color}`} style={{ width: pct }} />
-                      </div>
+                <div className="text-right">
+                  <p className="font-serif text-5xl font-semibold text-gray-50 leading-none">7.8</p>
+                  <p className="text-xs text-gray-500 mt-1">out of 10</p>
+                </div>
+              </div>
+              <div className="space-y-3 mb-6">
+                {SAMPLE_BARS.map(([label, v]) => (
+                  <div key={label}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-300">{label}</span>
+                      <span className="text-gray-400 tabular-nums">{v.toFixed(1)}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Investor Mode Card */}
-              <div className="flex-1 badge-glow rounded-xl p-5 text-left border border-purple-500/20 bg-purple-500/5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-                    <Building2 className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-sm">Investor Mode</h3>
-                    <p className="text-purple-400 text-xs">Prioritizes cash flow &amp; appreciation</p>
-                  </div>
-                </div>
-                <p className="text-gray-400 text-xs mb-4 leading-relaxed">
-                  Buying to rent or flip? The score re-weights toward rental yield, market appreciation, and economic growth — the numbers that drive your return on investment. Instantly see which properties pencil out.
-                </p>
-                <div className="space-y-1.5">
-                  <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-2">Score Weights</p>
-                  {[
-                    { label: 'Market Strength', pct: '30%', color: 'bg-purple-500' },
-                    { label: 'Rental Potential', pct: '25%', color: 'bg-purple-400' },
-                    { label: 'Demographic Trends', pct: '20%', color: 'bg-purple-400' },
-                    { label: 'Safety Score', pct: '10%', color: 'bg-purple-300' },
-                    { label: 'Walkability', pct: '10%', color: 'bg-purple-300' },
-                    { label: 'School Quality', pct: '5%', color: 'bg-purple-200' },
-                  ].map(({ label, pct, color }) => (
-                    <div key={label} className="flex items-center gap-2">
-                      <div className="flex-1 flex items-center justify-between">
-                        <span className="text-gray-400 text-xs">{label}</span>
-                        <span className="text-gray-300 text-xs font-medium">{pct}</span>
-                      </div>
-                      <div className="w-16 h-1 rounded-full bg-gray-700/60 overflow-hidden">
-                        <div className={`h-full rounded-full ${color}`} style={{ width: pct }} />
-                      </div>
+                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-full rounded-full bg-cyan-400" style={{ width: `${v * 10}%` }} />
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl bg-white/[0.03] border border-white/10 p-4 text-sm">
+                <p className="text-gray-200 font-medium mb-1 flex items-center gap-2">
+                  <Droplets className="w-4 h-4 text-cyan-300" /> Flood zone X — minimal risk
+                </p>
+                <p className="text-gray-400">Flood insurance not required by lenders here.</p>
               </div>
             </div>
-          </div>
-
-          {/* Stats badges */}
-          <div className="flex justify-center gap-6 mt-6 flex-wrap">
-            <div className="badge-glow px-4 py-2 rounded-lg">
-              <span className="text-cyan-400 font-bold">1-Year</span>
-              <span className="text-gray-400 text-sm ml-2">Forecasts</span>
-            </div>
-            <div className="badge-glow px-4 py-2 rounded-lg">
-              <span className="text-green-400 font-bold">10+</span>
-              <span className="text-gray-400 text-sm ml-2">Data Sources</span>
-            </div>
-            <div className="badge-glow px-4 py-2 rounded-lg">
-              <span className="text-purple-400 font-bold">Zillow</span>
-              <span className="text-gray-400 text-sm ml-2">Powered</span>
+            <div className="hidden sm:flex absolute -bottom-5 -left-5 items-center gap-2 rounded-xl bg-purple-400 text-gray-950 px-4 py-2.5 shadow-xl text-sm font-semibold">
+              <Clock className="w-4 h-4" /> Ready in about a minute
             </div>
           </div>
         </div>
       </section>
 
-      {/* Early Bird Special Section */}
+      {/* Sources strip */}
+      <section className="border-y border-white/10 bg-white/[0.02] px-4 sm:px-6 py-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center gap-3 md:gap-8">
+          <p className="text-xs uppercase tracking-widest text-gray-500 shrink-0">Built on data from</p>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            U.S. Census Bureau · FEMA · USGS · Federal Reserve · HUD · Bureau of Labor Statistics · Zillow Research · OpenStreetMap
+          </p>
+        </div>
+      </section>
+
+      {/* Early bird */}
       {earlyBirdStats && earlyBirdStats.spotsRemaining > 0 && (
-        <section className="py-12 px-4 sm:px-6 lg:px-8 glass border-y border-cyan-500/20">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-purple-500/20 text-purple-400 px-4 py-2 rounded-full mb-4 border border-purple-500/30">
-              <Gift className="w-4 h-4" />
-              <span className="text-sm font-semibold">Limited Time Offer</span>
+        <section className="px-4 sm:px-6 py-14">
+          <div className="max-w-4xl mx-auto glass-card rounded-2xl p-8 flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            <div className="p-4 rounded-2xl bg-purple-400/10 border border-purple-400/30">
+              <Gift className="w-8 h-8 text-purple-300" />
             </div>
-            <h2 className="text-3xl font-bold mb-3 text-white">
-              Early Bird Special
-            </h2>
-            <p className="text-lg text-gray-400 mb-6">
-              Sign up now and get <span className="font-bold text-cyan-400">2 FREE search credits</span> automatically added to your account!
-            </p>
-            <div className="flex flex-col items-center gap-4 mb-6">
-              <div className="text-5xl font-bold text-gradient-cyan metric-score">
-                {earlyBirdStats.spotsRemaining}
-              </div>
-              <p className="text-sm text-gray-500">
-                spots remaining out of 200
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-2xl font-semibold text-gray-50 mb-2">Your first 2 reports are on us</h2>
+              <p className="text-gray-400">
+                Create a free account and we’ll add 2 report credits. No card needed.{' '}
+                <span className="text-gray-300">{earlyBirdStats.spotsRemaining} of 200 spots left.</span>
               </p>
-              <div className="w-full max-w-md bg-gray-800/50 rounded-full h-3 overflow-hidden border border-gray-700">
-                <div 
-                  className="bg-gradient-to-r from-cyan-500 to-purple-500 h-full transition-all duration-300"
-                  style={{ width: `${((200 - earlyBirdStats.spotsRemaining) / 200) * 100}%` }}
-                />
-              </div>
             </div>
-            <Button 
-              size="lg" 
-              className="btn-gradient-purple"
-              onClick={() => window.location.href = '/api/login'} 
-              data-testid="button-claim-early-bird"
-            >
-              Claim Your Free Credits
+            <Button size="lg" className="btn-gradient-purple shrink-0" onClick={goSignup} data-testid="button-claim-early-bird">
+              Claim free reports
             </Button>
-            <p className="text-xs text-gray-500 mt-4">
-              Credits never expire • No credit card required
-            </p>
           </div>
         </section>
       )}
 
-      {/* Problem Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">
-            Buying Your First Property Shouldn't Feel Like Gambling
-          </h2>
-          <p className="text-center text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-            Don't let unfamiliar neighborhoods and scattered data keep you from finding the perfect property
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <HelpCircle className="w-8 h-8 text-cyan-400 icon-glow" />
-                </div>
-                <CardTitle className="text-lg text-white">New to the Area?</CardTitle>
-                <CardDescription className="text-gray-400">
-                  You don't have local knowledge about which neighborhoods are thriving and which ones to avoid. Understanding the macro-environment is crucial.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <AlertCircle className="w-8 h-8 text-purple-400 icon-glow-purple" />
-                </div>
-                <CardTitle className="text-lg text-white">Overwhelmed by Data?</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Census data, crime stats, school ratings, market trends—all scattered across dozens of websites. You need everything in one place.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <Target className="w-8 h-8 text-cyan-400 icon-glow" />
-                </div>
-                <CardTitle className="text-lg text-white">Can't Trust Everything?</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Realtors have incentives. Online reviews are mixed. You need objective, government-verified facts to make your decision.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <DollarSign className="w-8 h-8 text-purple-400 icon-glow-purple" />
-                </div>
-                <CardTitle className="text-lg text-white">One Mistake = Big Loss</CardTitle>
-                <CardDescription className="text-gray-400">
-                  A beautiful house in the wrong neighborhood can cost you thousands. Location determines long-term value and rental potential.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Metrics Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 glass">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">
-            Everything You Need to Know in One Simple Score
-          </h2>
-          <p className="text-center text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-            We analyze 10+ critical factors so you can make confident decisions about any US property
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <TrendingUp className="w-8 h-8 text-cyan-400 icon-glow" />
-                </div>
-                <CardTitle className="text-white">Market Strength</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Is this area growing or declining? Track property value trends, days on market, and homeownership rates to understand market momentum.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <Users className="w-8 h-8 text-purple-400 icon-glow-purple" />
-                </div>
-                <CardTitle className="text-white">Demographics</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Income levels, employment rates, education levels, and population growth patterns. Know who your neighbors will be.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <GraduationCap className="w-8 h-8 text-cyan-400 icon-glow" />
-                </div>
-                <CardTitle className="text-white">School Quality</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Understand school district ratings even if you don't have kids yet. Good schools drive property values and attract quality tenants.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <Home className="w-8 h-8 text-purple-400 icon-glow-purple" />
-                </div>
-                <CardTitle className="text-white">Rental Potential</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Need flexibility? See if you could rent this property later. Analyze rent-to-price ratios and rental demand indicators.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <Shield className="w-8 h-8 text-cyan-400 icon-glow" />
-                </div>
-                <CardTitle className="text-white">Safety Score</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Multi-source crime analysis combining ZIP-level crime grades, state FBI statistics, and national benchmarks (NIBRS) for comprehensive safety insights.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <Footprints className="w-8 h-8 text-purple-400 icon-glow-purple" />
-                </div>
-                <CardTitle className="text-white">Walkability</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Proximity to restaurants, shops, parks, healthcare, and transit. Quality of life matters for residents and renters alike.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 w-fit mb-3">
-                  <DollarSign className="w-8 h-8 text-green-400 icon-glow" />
-                </div>
-                <CardTitle className="text-white">Affordability Analysis</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Investment Grade rating (A–F), Market Timing signals, and Buy vs Rent analysis. Powered by Federal Reserve, HUD, and Bureau of Labor Statistics data.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 w-fit mb-3">
-                  <AlertCircle className="w-8 h-8 text-amber-400 icon-glow" />
-                </div>
-                <CardTitle className="text-white">Environmental Risk</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Flood zone classification from FEMA, seismic hazard rating from USGS, and air quality index from EPA EJScreen. Know the risks before you buy.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <BarChart3 className="w-8 h-8 text-cyan-400 icon-glow" />
-                </div>
-                <CardTitle className="text-white">Value &amp; Rent Forecasts</CardTitle>
-                <CardDescription className="text-gray-400">
-                  1-year home value appreciation forecast and rental rate projection sourced from Zillow Research data. See where the market is heading.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <Activity className="w-8 h-8 text-purple-400 icon-glow-purple" />
-                </div>
-                <CardTitle className="text-white">Economic Indicators</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Local unemployment trends from BLS, new housing supply via building permits from Census data, and construction pipeline activity to gauge market health.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          {/* Mortgage Calculator Feature */}
-          <div className="mt-12 text-center">
-            <Card className="glass-card card-glow-hover border-cyan-500/30 max-w-2xl mx-auto">
-              <CardHeader>
-                <div className="flex items-center justify-center gap-4">
-                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                    <Calculator className="w-8 h-8 text-green-400 icon-glow" />
-                  </div>
-                  <div className="text-left">
-                    <CardTitle className="text-white text-xl">Mortgage Calculator Included</CardTitle>
-                    <CardDescription className="text-gray-400">
-                      Estimate your monthly payments with current market rates. See principal, interest, taxes, insurance, and PMI breakdowns—all in one place.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Investment Calculators Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 glass">
-        <div className="max-w-7xl mx-auto">
-          <div className="inline-flex items-center gap-2 badge-glow px-4 py-2 rounded-full mb-6 mx-auto block w-fit">
-            <Calculator className="w-4 h-4 text-cyan-400" />
-            <span className="text-sm font-medium text-cyan-400">Investment Calculators</span>
-          </div>
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">
-            Calculate Your Returns Like a Pro
-          </h2>
-          <p className="text-center text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-            Four powerful calculators auto-populated with real data from your property analysis. No guesswork—just accurate numbers.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 w-fit mb-3">
-                  <DollarSign className="w-8 h-8 text-green-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Cash Flow Calculator</CardTitle>
-                <CardDescription className="text-gray-400">
-                  See your monthly profit after all expenses. Includes vacancy reserves, maintenance, and the "1% Rule" check to quickly assess if a property will generate positive income.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 w-fit mb-3">
-                  <TrendingUp className="w-8 h-8 text-purple-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Cap Rate Calculator</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Calculate Net Operating Income and Cap Rate to compare properties objectively. Understand Class A, B, and C property benchmarks and GRM (payback period).
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 w-fit mb-3">
-                  <BarChart3 className="w-8 h-8 text-cyan-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Cash-on-Cash Return</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Measure your actual return on the cash you invest. Compare your real estate returns to savings accounts, stocks, or other investment opportunities.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 w-fit mb-3">
-                  <Target className="w-8 h-8 text-yellow-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Maximum Offer Price</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Work backwards from your target return. Set your desired Cash-on-Cash return and instantly see the maximum price you should pay to hit that goal.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <div className="mt-8 text-center">
-            <div className="inline-flex items-center gap-3 glass-card px-6 py-4 rounded-lg border-cyan-500/30">
-              <Sparkles className="w-5 h-5 text-cyan-400" />
-              <span className="text-gray-300">
-                <strong className="text-white">Auto-populated with real data:</strong> Property price, rent estimates, mortgage rates, and tax data are pulled from your analysis—just adjust and calculate.
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Affordability & Value Analysis Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="inline-flex items-center gap-2 badge-glow px-4 py-2 rounded-full mb-6 mx-auto block w-fit">
-            <DollarSign className="w-4 h-4 text-green-400" />
-            <span className="text-sm font-medium text-green-400">NEW: Affordability Analysis</span>
-          </div>
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">
-            Know If It's the Right Time to Buy
-          </h2>
-          <p className="text-center text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-            Get Investment Grade ratings (A-F), Market Timing signals, and comprehensive affordability metrics powered by real-time government data
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-gradient-to-br from-green-500/20 to-cyan-500/20 border border-green-500/30 w-fit mb-3">
-                  <BarChart3 className="w-8 h-8 text-green-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Investment Grade</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Get an A-F letter grade based on affordability, job market, and value metrics. Know at a glance if a property is worth your investment.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 w-fit mb-3">
-                  <TrendingUp className="w-8 h-8 text-cyan-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Market Timing Signal</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Should you buy now, wait, or proceed with caution? Real-time signals based on mortgage trends, price levels, and economic indicators.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 w-fit mb-3">
-                  <DollarSign className="w-8 h-8 text-purple-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Buy vs Rent Analysis</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Compare monthly mortgage costs to local rents. See break-even timelines and get clear buy, rent, or neutral recommendations.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="p-3 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 w-fit mb-3">
-                  <Target className="w-8 h-8 text-orange-400" />
-                </div>
-                <CardTitle className="text-lg text-white">Overvaluation Check</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Is this property overpriced? We compare price-to-income ratios against historical averages to spot overheated markets.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="glass-card border-gray-700/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-400">Mortgage Rate Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 text-sm">Track 30-year fixed rates with week-over-week and year-over-year changes from Federal Reserve data.</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card border-gray-700/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-400">Job Market Strength</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 text-sm">State unemployment rates, employment growth, and economic outlook from Bureau of Labor Statistics.</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card border-gray-700/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-400">Section 8 / HUD Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 text-sm">Fair Market Rent data by bedroom count. Know if Section 8 is viable for rental investors.</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Data Sources */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">
-            Powered by Official, Trusted Sources
-          </h2>
-          <p className="text-center text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
-            All data comes from verified government and authoritative sources—no guesswork, no opinions
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Database className="w-6 h-6 text-cyan-400 icon-glow" />
-                  <CardTitle className="text-lg text-white">US Census Bureau</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Official demographics, income, employment, education, and housing data from the 2022-2023 American Community Survey.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <MapPin className="w-6 h-6 text-purple-400 icon-glow-purple" />
-                  <CardTitle className="text-lg text-white">OpenStreetMap</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Comprehensive walkability analysis with 50+ amenity categories within 1.5km radius including dining, shopping, healthcare, and transit.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <BarChart3 className="w-6 h-6 text-cyan-400 icon-glow" />
-                  <CardTitle className="text-lg text-white">Zillow Data</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Live property listings, market statistics, 1-year home value forecasts, rent forecasts, days to pending, and sale-to-list ratios.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <GraduationCap className="w-6 h-6 text-purple-400 icon-glow-purple" />
-                  <CardTitle className="text-lg text-white">Urban Institute Education Data</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Detailed school performance metrics, enrollment data, and charter/magnet school information covering 1,000+ schools.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Shield className="w-6 h-6 text-cyan-400 icon-glow" />
-                  <CardTitle className="text-lg text-white">Crime Data by ZipCode</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Hyper-local crime grades (A-F) for your exact ZIP code, covering overall safety, violent crime, and property crime levels.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Shield className="w-6 h-6 text-purple-400 icon-glow-purple" />
-                  <CardTitle className="text-lg text-white">FBI Crime Data API</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Official state-level crime statistics comparing violent and property crime rates against national averages.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <BarChart3 className="w-6 h-6 text-cyan-400 icon-glow" />
-                  <CardTitle className="text-lg text-white">NIBRS National Benchmarks</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  National Incident-Based Reporting System data providing crime type breakdowns for context and comparison.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <TrendingUp className="w-6 h-6 text-green-400" />
-                  <CardTitle className="text-lg text-white">Federal Reserve (FRED)</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Real-time 30-year fixed mortgage rate trends with historical comparisons from the Federal Reserve Economic Data.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Home className="w-6 h-6 text-purple-400 icon-glow-purple" />
-                  <CardTitle className="text-lg text-white">HUD Fair Market Rent</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Official Section 8 rent limits by bedroom count from HUD, enabling rental investment strategy analysis.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Users className="w-6 h-6 text-cyan-400 icon-glow" />
-                  <CardTitle className="text-lg text-white">Bureau of Labor Statistics</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  State-level unemployment rates, labor force participation, and job market strength indicators.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <BarChart3 className="w-6 h-6 text-purple-400 icon-glow-purple" />
-                  <CardTitle className="text-lg text-white">Census Building Permits</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  New construction activity data showing single-family and multi-family permit trends for supply outlook.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Home className="w-6 h-6 text-green-400" />
-                  <CardTitle className="text-lg text-white">RentCast API</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Property-specific rental estimates and rent comparables for accurate rental income projections.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Droplets className="w-6 h-6 text-blue-400" />
-                  <CardTitle className="text-lg text-white">FEMA National Flood Hazard Layer</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Official FEMA flood zone classifications (Special Flood Hazard Areas, Zone X, and more) for every property address. Know if flood insurance is required or recommended before you close — and factor it into your true cost of ownership.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Activity className="w-6 h-6 text-amber-400" />
-                  <CardTitle className="text-lg text-white">USGS National Seismic Hazard Maps</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Peak Ground Acceleration (PGA) data from the USGS ASCE 7-22 standard — the same seismic model used by structural engineers. Instantly know whether a property sits in a low, moderate, high, or very high seismic risk zone before purchasing.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Wind className="w-6 h-6 text-green-400" />
-                  <CardTitle className="text-lg text-white">EPA EJScreen 2023</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  EPA's Environmental Justice screening tool measuring air quality, PM2.5 particulates, ozone levels, and diesel pollution around any property. Environmental factors directly affect long-term livability, health outcomes, and property value trajectories.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 glass">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-white">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-center text-lg text-gray-400 mb-12">
-            Pay as you go • No monthly subscriptions • Credits never expire
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Starter Package */}
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <CardTitle className="text-2xl text-white">Starter Package</CardTitle>
-                <div className="mt-4">
-                  <span className="text-5xl font-bold text-gradient-cyan metric-score">$10</span>
-                  <span className="text-gray-400 text-lg"> one-time</span>
-                </div>
-                <CardDescription className="mt-4 text-gray-400">
-                  Perfect for first-time buyers exploring a few properties
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                    <span className="font-semibold text-white">5 property search credits</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                    <span className="text-gray-300">Complete 10+ metric analysis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                    <span className="text-gray-300">Investment Grade (A-F) rating</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                    <span className="text-gray-300">Market Timing signals</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                    <span className="text-gray-300">Buy vs Rent analysis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                    <span className="text-gray-300">Real-time government data</span>
-                  </li>
-                </ul>
-                <Button 
-                  className="w-full btn-outline-cyan" 
-                  onClick={() => setLocation('/pricing')} 
-                  data-testid="button-starter-plan"
-                >
-                  Buy 5 Credits
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Advanced Package */}
-            <Card className="glass-card card-glow-hover border-cyan-500/50 relative glow-cyan-sm">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white border-0">Best Value</Badge>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl text-white">Advanced Package</CardTitle>
-                <div className="mt-4">
-                  <span className="text-5xl font-bold text-gradient-purple metric-score">$20</span>
-                  <span className="text-gray-400 text-lg"> one-time</span>
-                </div>
-                <CardDescription className="mt-4 text-gray-400">
-                  For investors comparing multiple properties or neighborhoods
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="font-semibold text-white">12 property search credits</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="text-gray-300">Complete 10+ metric analysis</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="text-gray-300">Investment Grade (A-F) rating</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="text-gray-300">Market Timing signals</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="text-gray-300">Buy vs Rent & Affordability</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="text-gray-300">Real-time government data</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 flex-shrink-0" />
-                    <span className="text-gray-300">Priority support</span>
-                  </li>
-                </ul>
-                <Button 
-                  className="w-full btn-gradient-purple" 
-                  onClick={() => setLocation('/pricing')} 
-                  data-testid="button-advanced-plan"
-                >
-                  Buy 12 Credits
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Free Investor Toolkit Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-800">
+      {/* Problem — light band */}
+      <section className="paper px-4 sm:px-6 py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30 mb-4">
-              100% Free
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              Free <span className="text-gradient-cyan">Investor Toolkit</span>
+          <div className="max-w-2xl mb-12">
+            <h2 className="text-3xl md:text-4xl font-semibold text-[#1d2a24] mb-4">
+              The house looks great. What about the street it’s on?
             </h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              Use our free calculators to plan your investment strategy. No sign-up required.
+            <p className="text-lg text-[#55524a] leading-relaxed">
+              Listings show you kitchens and square feet. The things that decide whether you’ll be happy
+              there — and what the home is worth in five years — are spread across a dozen government
+              websites. We bring them together.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <DollarSign className="w-6 h-6 text-cyan-400 icon-glow" />
-                  <CardTitle className="text-lg text-white">Buying Power</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  DTI Calculator and Home Affordability Calculator to understand your purchasing power and mortgage qualification.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Calculator className="w-6 h-6 text-purple-400 icon-glow-purple" />
-                  <CardTitle className="text-lg text-white">Tax Planning</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Capital Gains Tax Calculator and 1031 Exchange Calculator to optimize your tax strategy when buying or selling.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="glass-card card-glow-hover border-gray-700/50">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Target className="w-6 h-6 text-green-400" />
-                  <CardTitle className="text-lg text-white">Renovation</CardTitle>
-                </div>
-                <CardDescription className="text-gray-400">
-                  Rehab Cost Estimator and ARV Calculator to evaluate fix-and-flip or BRRRR investment opportunities.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              ['New to the area?', 'Moving for a job or from abroad, you don’t know which parts of town are on the way up. The report gives you the local picture fast.'],
+              ['Too many tabs open?', 'Crime maps, school sites, flood maps, census tables. One address in, one report out.'],
+              ['Who can you trust?', 'Sellers and agents want the deal to close. Public records don’t. We show the source for every number.'],
+              ['A costly mistake to undo', 'A great house on the wrong block can cost you for years — in resale value, insurance or rent.'],
+            ].map(([t, b]) => (
+              <div key={t} className="rounded-xl bg-white/70 border border-[#e3dccd] p-6">
+                <h3 className="font-semibold text-[#1d2a24] mb-2">{t}</h3>
+                <p className="text-sm text-[#5f5b52] leading-relaxed">{b}</p>
+              </div>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="text-center">
-            <Button 
-              size="lg"
-              className="btn-outline-cyan"
-              onClick={() => setLocation('/toolkit')} 
-              data-testid="button-explore-toolkit"
-            >
-              Explore Free Tools
+      {/* What's in a report */}
+      <section className="px-4 sm:px-6 py-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="max-w-2xl mb-12">
+            <p className="text-sm text-cyan-300 mb-3">What’s in a report</p>
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-50 mb-4">
+              Everything you’d research yourself, on one page
+            </h2>
+            <p className="text-lg text-gray-400">Each section has a short summary up top and the detail underneath, so you can skim or dig in.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {REPORT_ITEMS.map(({ icon: Icon, title, body }) => (
+              <div key={title} className="glass-card card-glow-hover rounded-xl p-6">
+                <Icon className="w-6 h-6 text-cyan-300 mb-4" />
+                <h3 className="text-gray-100 font-semibold mb-2">{title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{body}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10">
+            <Button variant="outline" className="btn-outline-cyan" onClick={() => setLocation('/demo')}>
+              <FileText className="w-4 h-4 mr-2" /> Open the sample report
             </Button>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 hero-glow relative overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Make Your Next Property Decision with <span className="text-gradient-cyan">Confidence</span>
+      {/* Two ways to score */}
+      <section className="px-4 sm:px-6 py-20 border-t border-white/10">
+        <div className="max-w-6xl mx-auto">
+          <div className="max-w-2xl mb-12">
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-50 mb-4">One score, weighted for how you’ll use the home</h2>
+            <p className="text-lg text-gray-400">
+              Switch between the two views any time. Nothing is hidden: these are the exact weights behind the number.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="glass-card rounded-2xl p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <Home className="w-5 h-5 text-cyan-300" />
+                <h3 className="text-lg font-semibold text-gray-50">Living there</h3>
+              </div>
+              <p className="text-sm text-gray-400 mb-6">Leans on schools, safety and a steady local market.</p>
+              <Weights rows={HOMEBUYER_WEIGHTS} tone="sage" />
+            </div>
+            <div className="glass-card rounded-2xl p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <Building2 className="w-5 h-5 text-purple-300" />
+                <h3 className="text-lg font-semibold text-gray-50">Renting it out</h3>
+              </div>
+              <p className="text-sm text-gray-400 mb-6">Leans on rent, price growth and local demand.</p>
+              <Weights rows={INVESTOR_WEIGHTS} tone="brass" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sources */}
+      <section className="px-4 sm:px-6 py-20 bg-white/[0.02] border-y border-white/10">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_1.4fr] gap-12">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-50 mb-4">Where the numbers come from</h2>
+            <p className="text-lg text-gray-400 leading-relaxed">
+              We don’t guess and we don’t sell listings. Every figure in your report comes from a named
+              public or industry source, and the report tells you which one and how recent it is.
+            </p>
+          </div>
+          <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
+            {SOURCES.map(([name, what]) => (
+              <div key={name} className="border-l-2 border-cyan-400/40 pl-4">
+                <dt className="text-gray-100 font-medium">{name}</dt>
+                <dd className="text-sm text-gray-400">{what}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* Pricing teaser */}
+      <section className="px-4 sm:px-6 py-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-50 mb-4">Pay per report. That’s it.</h2>
+            <p className="text-lg text-gray-400">No monthly fee. Credits never expire. One credit = one full property report.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {[
+              { name: 'Starter', price: '$10', credits: '5 reports', each: '$2.00 per report', note: 'Comparing a few homes you’re serious about.', featured: false },
+              { name: 'Plus', price: '$20', credits: '12 reports', each: '$1.67 per report', note: 'Weighing several neighborhoods or a small portfolio.', featured: true },
+            ].map((p) => (
+              <div key={p.name} className={`rounded-2xl p-7 ${p.featured ? 'bg-purple-400/[0.07] border border-purple-400/40' : 'glass-card'}`}>
+                <div className="flex items-baseline justify-between mb-1">
+                  <h3 className="text-lg font-semibold text-gray-50">{p.name}</h3>
+                  {p.featured && <span className="text-xs font-medium text-purple-300">Best value</span>}
+                </div>
+                <p className="font-serif text-4xl font-semibold text-gray-50 mb-1">{p.price}</p>
+                <p className="text-gray-300">{p.credits} <span className="text-gray-500">· {p.each}</span></p>
+                <p className="text-sm text-gray-400 mt-4 mb-6">{p.note}</p>
+                <Button className={p.featured ? 'btn-gradient-purple w-full' : 'btn-outline-cyan w-full'} variant={p.featured ? 'default' : 'outline'} onClick={() => setLocation('/pricing')}>
+                  Choose {p.name}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Free tools */}
+      <section className="px-4 sm:px-6 pb-20">
+        <div className="max-w-6xl mx-auto glass-card rounded-2xl p-8 md:p-10 grid md:grid-cols-[1fr_auto] gap-6 items-center">
+          <div>
+            <p className="text-sm text-cyan-300 mb-2">Free, no account needed</p>
+            <h2 className="text-2xl md:text-3xl font-semibold text-gray-50 mb-3">Seven calculators for buyers and investors</h2>
+            <p className="text-gray-400">
+              How much house can I afford? What’s my debt-to-income? Capital gains, 1031 exchange,
+              rehab costs, after-repair value and a stress test for rising rates.
+            </p>
+          </div>
+          <Button size="lg" variant="outline" className="btn-outline-cyan" onClick={() => setLocation('/toolkit')}>
+            Open free tools <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="paper px-4 sm:px-6 py-20">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-semibold text-[#1d2a24] mb-8">Common questions</h2>
+          <Accordion type="single" collapsible className="w-full">
+            {FAQS.map((f, i) => (
+              <AccordionItem key={f.q} value={`q${i}`} className="border-[#ddd5c4]">
+                <AccordionTrigger className="text-left text-[#1d2a24] text-base font-semibold hover:no-underline">
+                  {f.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-[#55524a] text-base leading-relaxed">{f.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="px-4 sm:px-6 py-24">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-5xl font-semibold text-gray-50 mb-5 leading-tight">
+            Make an offer knowing what you’re buying into.
           </h2>
-          <p className="text-xl text-gray-400 mb-8">
-            Join smart buyers who research the macro-environment before they commit
-          </p>
-          <Button 
-            size="lg" 
-            className="btn-gradient-purple px-10 py-6 text-lg"
-            onClick={() => setLocation('/pricing')} 
-            data-testid="button-cta-start"
-          >
-            Get Your First Report
+          <p className="text-lg text-gray-400 mb-8">Start with two free reports. Try it on the home you’re looking at this week.</p>
+          <Button size="lg" className="btn-gradient-purple h-12 px-7 text-base" onClick={goSignup} data-testid="button-final-cta">
+            Check an address <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 glass">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-6">
-              <a href="https://www.facebook.com/profile.php?id=61584350274435" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-cyan-400 transition-colors p-2 rounded-md" data-testid="link-facebook">
-                <FaFacebook className="w-5 h-5" />
-              </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-purple-400 transition-colors p-2 rounded-md" data-testid="link-instagram">
-                <FaInstagram className="w-5 h-5" />
-              </a>
-              <a href="https://x.com/ScoreCasa" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-cyan-400 transition-colors p-2 rounded-md" data-testid="link-x">
-                <FaXTwitter className="w-5 h-5" />
-              </a>
-              <a href="https://www.tiktok.com/@scorecasa" target="_blank" rel="noopener noreferrer" aria-label="Visit our TikTok page" className="text-gray-500 hover:text-cyan-400 transition-colors p-2 rounded-md" data-testid="link-tiktok">
-                <FaTiktok className="w-5 h-5" />
-              </a>
-            </div>
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              <a href="/privacy" className="text-sm text-gray-500 hover:text-cyan-400 transition-colors" data-testid="link-privacy">
-                Privacy Policy
-              </a>
-              <span className="text-gray-700">•</span>
-              <a href="/terms" className="text-sm text-gray-500 hover:text-cyan-400 transition-colors" data-testid="link-terms">
-                Terms and Conditions
-              </a>
-              <span className="text-gray-700">•</span>
-              <a href="/contact" className="text-sm text-gray-500 hover:text-cyan-400 transition-colors" data-testid="link-contact">
-                Contact Us
-              </a>
-              <span className="text-gray-700">&bull;</span>
-              <a href="/toolkit" className="text-sm text-gray-500 hover:text-cyan-400 transition-colors" data-testid="link-toolkit">
-                Free Tools
-              </a>
-            </div>
-            <p className="text-xs text-gray-600">
-              This tool provides data-driven insights to support your decisions, not financial advice.
-            </p>
-            <p className="text-sm text-gray-500">
-              &copy; 2025 ScoreCasa
+      <footer className="border-t border-white/10 px-4 sm:px-6 py-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 md:items-center md:justify-between">
+          <div>
+            <Logo className="h-8 w-auto mb-2" />
+            <p className="text-xs text-gray-500 max-w-sm">
+              ScoreCasa is a research tool, not financial, legal or real estate advice.
+              &copy; {new Date().getFullYear()} ScoreCasa
             </p>
           </div>
+          <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <a href="/demo" className="text-gray-400 hover:text-gray-100">Sample report</a>
+            <a href="/toolkit" className="text-gray-400 hover:text-gray-100" data-testid="link-toolkit">Free tools</a>
+            <a href="/pricing" className="text-gray-400 hover:text-gray-100">Pricing</a>
+            <a href="/contact" className="text-gray-400 hover:text-gray-100" data-testid="link-contact">Contact</a>
+            <a href="/privacy" className="text-gray-400 hover:text-gray-100" data-testid="link-privacy">Privacy</a>
+            <a href="/terms" className="text-gray-400 hover:text-gray-100" data-testid="link-terms">Terms</a>
+            <span className="flex items-center gap-1">
+              <a href="https://www.facebook.com/profile.php?id=61584350274435" target="_blank" rel="noopener noreferrer" aria-label="ScoreCasa on Facebook" className="text-gray-500 hover:text-gray-100 p-2" data-testid="link-facebook"><FaFacebook className="w-4 h-4" /></a>
+              <a href="https://x.com/ScoreCasa" target="_blank" rel="noopener noreferrer" aria-label="ScoreCasa on X" className="text-gray-500 hover:text-gray-100 p-2" data-testid="link-x"><FaXTwitter className="w-4 h-4" /></a>
+              <a href="https://www.tiktok.com/@scorecasa" target="_blank" rel="noopener noreferrer" aria-label="ScoreCasa on TikTok" className="text-gray-500 hover:text-gray-100 p-2" data-testid="link-tiktok"><FaTiktok className="w-4 h-4" /></a>
+            </span>
+          </nav>
         </div>
       </footer>
     </div>

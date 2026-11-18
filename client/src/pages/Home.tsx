@@ -307,7 +307,7 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-muted-foreground">
-              This tool provides data-driven insights to support your decisions, not financial advice.
+              ScoreCasa is a research tool, not financial, legal or real estate advice.
             </p>
             <p className="text-sm text-muted-foreground">
               &copy; 2025 ScoreCasa

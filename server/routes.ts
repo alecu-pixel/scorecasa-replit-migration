@@ -22,7 +22,7 @@ import { fetchSeismicRisk } from "./services/seismicRisk";
 import { queryFHFAAppreciation } from "./services/dataPipeline/fhfaDownloader";
 import { queryRedfinMarketHeat } from "./services/dataPipeline/redfinDownloader";
 import { queryIRSMigration } from "./services/dataPipeline/irsMigrationDownloader";
-import { isAuthenticated } from "./replitAuth";
+import { isAuthenticated } from "./auth";
 import { isAdmin } from "./adminMiddleware";
 import { storage } from "./storage";
 import { getUncachableStripeClient, getStripeWebhookSecret } from "./stripeClient";
