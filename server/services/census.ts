@@ -163,8 +163,8 @@ export async function getCensusGrowthData(zipCode: string): Promise<GrowthData> 
   console.log(`Fetching growth data for ZIP ${zipCode}: ${year1} vs ${year2}`);
   
   const [response1, response2] = await Promise.all([
-    fetch(`https://api.census.gov/data/${year1}/acs/acs5?get=${variables}&for=zip%20code%20tabulation%20area:${zipCode}`),
-    fetch(`https://api.census.gov/data/${year2}/acs/acs5?get=${variables}&for=zip%20code%20tabulation%20area:${zipCode}`)
+    fetch(`https://api.census.gov/data/${year1}/acs/acs5?get=${variables}&for=zip%20code%20tabulation%20area:${zipCode}${process.env.CENSUS_API_KEY ? `&key=${process.env.CENSUS_API_KEY}` : ''}`),
+    fetch(`https://api.census.gov/data/${year2}/acs/acs5?get=${variables}&for=zip%20code%20tabulation%20area:${zipCode}${process.env.CENSUS_API_KEY ? `&key=${process.env.CENSUS_API_KEY}` : ''}`)
   ]);
 
   console.log(`Response statuses: ${year1}=${response1.status}, ${year2}=${response2.status}`);
