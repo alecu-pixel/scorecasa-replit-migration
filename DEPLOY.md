@@ -1,44 +1,56 @@
 # Putting scorecasa.com back online
 
-Hosting: **Render** (runs the app, ~$7/month) + **Neon** (Postgres database, free tier).
-Total: about $7/month plus the domain renewal.
+Hosting: **Render** runs the app (~$7/month). **Supabase** holds the database (free plan, same account as Expira).
+The old Polsia database was checked on 2026-11-18: it was empty (no users), so we start fresh.
 
-## 0. Renew the domain (do this first)
-Log in to the registrar where scorecasa.com is registered and renew it. Turn on auto-renew.
-If you're not sure where it's registered, look it up at https://lookup.icann.org/en/lookup → "Registrar".
+## 0. Renew the domain (first!)
+Renew scorecasa.com at your registrar and turn on auto-renew.
+Not sure where it's registered? https://lookup.icann.org/en/lookup → "Registrar".
 
-## 1. Database (Neon)
-1. Create a free account at https://neon.tech and a project named `scorecasa` (region: US East).
-2. Copy the connection string (starts with `postgresql://…neon.tech/…?sslmode=require`).
-3. Create the tables, from this folder on your PC:
-   ```
-   set DATABASE_URL=<paste the Neon URL>
-   npm run db:push
-   ```
-   **Have your old Replit database?** Replit's database was also Neon. If you still have its URL
-   (Replit → Secrets → `DATABASE_URL`), skip the steps above and just use that URL: users, credits
-   and history come with it. Old users log in with "Forgot password" using the same email.
+## 1. Keys
+| Key | Where it comes from | Notes |
+|---|---|---|
+| RAPIDAPI_KEY | Polsia → Website → ⋯ → Secrets → Reveal | |
+| RENTCAST_API_KEY | Polsia (same place) | |
+| STRIPE_SECRET_KEY | Polsia | `sk_live_…` = real payments, `sk_test_…` = test mode |
+| VITE_STRIPE_PUBLIC_KEY | Polsia | must be the same mode (live/test) as the secret key |
+| STRIPE_WEBHOOK_SECRET | Polsia | stays valid if you **edit** the existing Stripe webhook (step 5) instead of creating a new one |
+| SESSION_SECRET | Polsia | any long random text works |
+| PERPLEXITY_API_KEY | — | **not used.** Without it the app writes the outlook itself from the report numbers. |
+| RESEND, CENSUS, SCHOOLDIGGER, FRED, BLS, HUD, FBI | Replit → Secrets (never moved to Polsia) | optional; Resend is needed for password-reset emails |
 
-## 2. App (Render)
+Paste them into `.env.local` (for testing on your PC) and later into Render (step 3).
+
+## 2. Database (Supabase)
+1. https://supabase.com/dashboard → your organization (the one with Expira) → **New project**.
+2. Name `scorecasa`. Click **Generate a password** and save it in your password manager.
+   Region: **East US (North Virginia)**. Plan: Free.
+3. If the form shows **"Enable Data API"** (under Security / Advanced), **untick it**. ScoreCasa talks to the
+   database directly and doesn't need it, and leaving it off means the tables can't be reached from the
+   public Supabase API.
+4. Create the project and wait ~2 minutes.
+5. Click **Connect** (top of the project page) → **Connection string** → choose **Session pooler**.
+   Copy the URI and replace `[YOUR-PASSWORD]` with the password from step 2.
+   (Use Session pooler, not "Direct connection": Render can't reach the direct one.)
+6. Put that URI in `.env.local` as `DATABASE_URL=…`, then Claude creates the tables (`npm run db:push`)
+   and tests the app against it.
+
+## 3. App (Render)
 1. Create an account at https://render.com and connect GitHub.
 2. New → **Blueprint** → pick the `scorecasa-replit-migration` repo. Render reads `render.yaml`.
-3. Fill in the environment variables it asks for (database URL from step 1, API keys from Replit/Polsia secrets).
+3. Paste the values from step 1 and the Supabase URI into the environment variables. Leave Perplexity empty.
 4. Deploy. You get a test address like `https://scorecasa.onrender.com`. Check it works.
 
-## 3. Point the domain at Render
+## 4. Point the domain at Render
 1. Render → the scorecasa service → Settings → Custom Domains → add `scorecasa.com` and `www.scorecasa.com`.
-2. At your registrar's DNS settings, add the records Render shows (usually):
-   - `A` record, host `@` → `216.24.57.1`
-   - `CNAME` record, host `www` → `scorecasa.onrender.com`
-   Remove any old A/CNAME records that pointed at Replit or Polsia.
-3. Wait for Render to show "Verified" and issue the HTTPS certificate (minutes to a few hours).
+2. At your registrar's DNS, add what Render shows (usually `A @ → 216.24.57.1` and `CNAME www → scorecasa.onrender.com`).
+   Remove old A/CNAME records that point at Replit or Polsia.
+3. Wait for "Verified" and the HTTPS certificate.
 
-## 4. Payments and email
-- **Stripe** → Developers → Webhooks: set the endpoint to `https://scorecasa.com/api/stripe/webhook`
-  (event `checkout.session.completed`) and put its signing secret in `STRIPE_WEBHOOK_SECRET`.
-- **Resend**: make sure the `scorecasa.com` domain is still verified (DNS records may need re-adding
-  if you change DNS provider), otherwise password-reset and welcome emails won't send.
+## 5. Stripe and email
+- **Stripe** → Developers → Webhooks → open the existing ScoreCasa endpoint → **Edit** the URL to
+  `https://scorecasa.com/api/stripe/webhook` (event `checkout.session.completed`). Editing keeps the same signing secret.
+- **Resend**: check the `scorecasa.com` domain is still verified, or reset and welcome emails won't send.
 
-## 5. Final check
-Sign up, log in, log out, "Forgot password" email arrives, run one property report,
-buy credits in Stripe test mode, send the contact form.
+## 6. Final check
+Sign up, log in, log out, "Forgot password" email, one property report, a Stripe test purchase, the contact form.
