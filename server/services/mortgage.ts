@@ -1,87 +1,64 @@
 import type { MortgageRates } from "@shared/schema";
 import { getLatestMortgageRate } from "./dataPipeline/fredDownloader";
 
-export async function fetchMortgageRates(): Promise<MortgageRates> {
-  const apiKey = process.env.RAPIDAPI_KEY;
-  
-  if (apiKey) {
-    try {
-      const url = 'https://us-realtor.p.rapidapi.com/mortgage/rates';
-      
-      console.log('Fetching mortgage rates from US Realtor API');
+const FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=";
+const CACHE_MS = 6 * 60 * 60 * 1000; // Freddie Mac publishes weekly; refresh a few times a day
+let cached: { at: number; rates: MortgageRates } | null = null;
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-key': apiKey.trim(),
-          'x-rapidapi-host': 'us-realtor.p.rapidapi.com'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Mortgage API response:', JSON.stringify(data, null, 2));
-        return parseRatesResponse(data);
-      }
-
-      console.log(`Mortgage API returned ${response.status}, trying FRED fallback`);
-    } catch (error) {
-      console.error('Mortgage rates fetch error:', error);
-    }
+// Latest value of a FRED series from its public CSV (no API key needed).
+async function latestFredValue(seriesId: string): Promise<{ date: string; rate: number } | null> {
+  const res = await fetch(FRED_CSV + seriesId, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`FRED ${seriesId} returned ${res.status}`);
+  const lines = (await res.text()).trim().split(/\r?\n/).slice(1);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const [date, value] = lines[i].split(",");
+    const rate = parseFloat(value);
+    if (date && Number.isFinite(rate) && rate > 0) return { date: date.trim(), rate };
   }
+  return null;
+}
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function ratesFrom30(rate30: number, date: string, rate15?: number): MortgageRates {
+  return {
+    thirtyYearFixed: round2(rate30),
+    fifteenYearFixed: round2(rate15 ?? rate30 - 0.70),
+    fiveYearArm: round2(rate30 - 0.40),
+    jumbo: round2(rate30 + 0.20),
+    fha: round2(rate30 - 0.30),
+    va: round2(rate30 - 0.60),
+    lastUpdated: date,
+    source: "Freddie Mac weekly survey (FRED)",
+  };
+}
+
+export async function fetchMortgageRates(): Promise<MortgageRates> {
+  if (cached && Date.now() - cached.at < CACHE_MS) return cached.rates;
+  try {
+    const [r30, r15] = await Promise.all([
+      latestFredValue("MORTGAGE30US"),
+      latestFredValue("MORTGAGE15US").catch(() => null),
+    ]);
+    if (r30) {
+      const rates = ratesFrom30(r30.rate, r30.date, r15?.rate);
+      cached = { at: Date.now(), rates };
+      return rates;
+    }
+  } catch (error) {
+    console.error("FRED mortgage rate fetch failed:", error);
+  }
   return getFredRatesOrDefault();
 }
 
 async function getFredRatesOrDefault(): Promise<MortgageRates> {
   try {
     const fredRate = await getLatestMortgageRate();
-    if (fredRate && fredRate.rate > 0) {
-      const rate30yr = Math.round(fredRate.rate * 100) / 100;
-      console.log(`Using FRED cached mortgage rate: ${rate30yr}% (as of ${fredRate.date})`);
-      return {
-        thirtyYearFixed: rate30yr,
-        fifteenYearFixed: Math.round((rate30yr - 0.70) * 100) / 100,
-        fiveYearArm: Math.round((rate30yr - 0.40) * 100) / 100,
-        jumbo: Math.round((rate30yr + 0.20) * 100) / 100,
-        fha: Math.round((rate30yr - 0.30) * 100) / 100,
-        va: Math.round((rate30yr - 0.60) * 100) / 100,
-        lastUpdated: fredRate.date,
-        source: 'FRED (Freddie Mac)'
-      };
-    }
+    if (fredRate && fredRate.rate > 0) return ratesFrom30(fredRate.rate, fredRate.date);
   } catch (error) {
-    console.error('FRED rate lookup failed:', error);
+    console.error("FRED rate lookup failed:", error);
   }
-
   return getDefaultRates();
-}
-
-function parseRatesResponse(data: any): MortgageRates {
-  try {
-    const rates = data?.rates || data?.data?.rates || data;
-    
-    const rate30yr = rates?.rate30yr || rates?.thirtyYearFixed || rates?.['30yr_fixed'] || null;
-    const rate15yr = rates?.rate15yr || rates?.fifteenYearFixed || rates?.['15yr_fixed'] || null;
-    const rate5yrArm = rates?.rate5yrArm || rates?.fiveYearArm || rates?.['5yr_arm'] || null;
-    const rateJumbo = rates?.rateJumbo || rates?.jumbo || rates?.jumbo30yr || null;
-    const rateFha = rates?.rateFha || rates?.fha || rates?.fha30yr || null;
-    const rateVa = rates?.rateVa || rates?.va || rates?.va30yr || null;
-
-    return {
-      thirtyYearFixed: rate30yr ? parseFloat(rate30yr) : 6.85,
-      fifteenYearFixed: rate15yr ? parseFloat(rate15yr) : 6.15,
-      fiveYearArm: rate5yrArm ? parseFloat(rate5yrArm) : 6.45,
-      jumbo: rateJumbo ? parseFloat(rateJumbo) : 7.05,
-      fha: rateFha ? parseFloat(rateFha) : 6.55,
-      va: rateVa ? parseFloat(rateVa) : 6.25,
-      lastUpdated: new Date().toISOString(),
-      source: 'US Realtor API'
-    };
-  } catch (error) {
-    console.error('Error parsing mortgage rates:', error);
-    return getDefaultRates();
-  }
 }
 
 function getDefaultRates(): MortgageRates {
