@@ -86,6 +86,10 @@ function categorizeAmenity(tags: any): { type: string; category: string } {
   return { type: 'Other', category: 'Other' };
 }
 
+// OSM services require an identifying User-Agent; anonymous requests get HTTP 406.
+const OSM_USER_AGENT = 'ScoreCasa/1.0 (https://scorecasa.com)';
+const OVERPASS_SERVERS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+
 export async function calculateWalkability(address: string): Promise<WalkabilityData> {
   // Step 1: Geocode the address using Nominatim (OSM)
   const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
@@ -93,8 +97,9 @@ export async function calculateWalkability(address: string): Promise<Walkability
   console.log('[Walkability] Geocoding address with Nominatim:', address);
   
   const geoResponse = await fetch(nominatimUrl, {
+    signal: AbortSignal.timeout(10000),
     headers: {
-      'User-Agent': 'PropertyInvestmentAnalyzer/1.0'
+      'User-Agent': OSM_USER_AGENT
     }
   });
 
@@ -115,63 +120,46 @@ export async function calculateWalkability(address: string): Promise<Walkability
 
   console.log('[Walkability] Address geocoded successfully to:', lat, lon);
 
-  // Step 2: Query Overpass API for nearby amenities within 1.5km
-  const overpassUrl = 'https://overpass-api.de/api/interpreter';
-  const radius = 1500; // 1.5km radius for better coverage
-  
-  // Query both nodes and ways to catch building-mapped amenities
-  const query = `
-    [out:json][timeout:25];
-    (
-      // Shopping - nodes and ways
-      node["shop"~"^(supermarket|convenience|mall|department_store|grocery|bakery|butcher|greengrocer|clothes|electronics|hardware|furniture|books|florist|jewelry)$"](around:${radius},${lat},${lon});
-      way["shop"~"^(supermarket|convenience|mall|department_store|grocery|bakery|butcher|greengrocer|clothes|electronics|hardware|furniture|books|florist|jewelry)$"](around:${radius},${lat},${lon});
-      
-      // Dining - nodes and ways
-      node["amenity"~"^(restaurant|cafe|fast_food|bar|pub|ice_cream|food_court)$"](around:${radius},${lat},${lon});
-      way["amenity"~"^(restaurant|cafe|fast_food|bar|pub|ice_cream|food_court)$"](around:${radius},${lat},${lon});
-      
-      // Healthcare - nodes and ways
-      node["amenity"~"^(hospital|clinic|doctors|dentist|pharmacy|veterinary)$"](around:${radius},${lat},${lon});
-      way["amenity"~"^(hospital|clinic|doctors|dentist|pharmacy|veterinary)$"](around:${radius},${lat},${lon});
-      
-      // Education - nodes and ways
-      node["amenity"~"^(school|kindergarten|college|university|library)$"](around:${radius},${lat},${lon});
-      way["amenity"~"^(school|kindergarten|college|university|library)$"](around:${radius},${lat},${lon});
-      
-      // Recreation & Entertainment - nodes and ways
-      node["leisure"~"^(park|playground|sports_centre|fitness_centre|swimming_pool)$"](around:${radius},${lat},${lon});
-      way["leisure"~"^(park|playground|sports_centre|fitness_centre|swimming_pool)$"](around:${radius},${lat},${lon});
-      node["amenity"~"^(cinema|theatre|gym)$"](around:${radius},${lat},${lon});
-      way["amenity"~"^(cinema|theatre|gym)$"](around:${radius},${lat},${lon});
-      
-      // Services - nodes and ways
-      node["amenity"~"^(bank|atm|post_office|fuel|parking|car_wash|police|fire_station)$"](around:${radius},${lat},${lon});
-      way["amenity"~"^(bank|atm|post_office|fuel|parking|car_wash|police|fire_station)$"](around:${radius},${lat},${lon});
-      
-      // Transportation - nodes only (these are typically points)
-      node["public_transport"~"^(station|stop_position)$"](around:${radius},${lat},${lon});
-      node["highway"="bus_stop"](around:${radius},${lat},${lon});
-      node["amenity"="taxi"](around:${radius},${lat},${lon});
-    );
-    out center;
-  `;
+  // Step 2: Query Overpass API for nearby amenities within 1.5km (nodes, ways and relations in one pass)
+  const radius = 1500;
+  const values = [
+    'supermarket','convenience','mall','department_store','grocery','bakery','butcher','greengrocer','clothes','electronics','hardware','furniture','books','florist','jewelry',
+    'restaurant','cafe','fast_food','bar','pub','ice_cream','food_court',
+    'hospital','clinic','doctors','dentist','pharmacy','veterinary',
+    'school','kindergarten','college','university','library',
+    'park','playground','sports_centre','fitness_centre','swimming_pool','cinema','theatre','gym',
+    'bank','atm','post_office','fuel','parking','car_wash','police','fire_station',
+    'station','stop_position','bus_stop','taxi',
+  ].join('|');
+  const query = `[out:json][timeout:40];
+nwr(around:${radius},${lat},${lon})[~"^(shop|amenity|leisure|public_transport|highway)$"~"^(${values})$"];
+out center;`;
 
   console.log('Querying Overpass API for nearby amenities...');
 
-  const poiResponse = await fetch(overpassUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: `data=${encodeURIComponent(query)}`
-  });
-
-  if (!poiResponse.ok) {
-    throw new Error('Amenity query failed');
+  // Public Overpass servers are often busy: try the main one, then a mirror.
+  let poiData: any = null;
+  let lastError = '';
+  for (const server of OVERPASS_SERVERS) {
+    try {
+      const res = await fetch(server, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': OSM_USER_AGENT },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      poiData = await res.json();
+      break;
+    } catch (err: any) {
+      lastError = `${server}: ${err.message}`;
+      console.warn('[Walkability] Overpass failed,', lastError);
+    }
+  }
+  if (!poiData) {
+    throw new Error(`Amenity query failed (${lastError})`);
   }
 
-  const poiData = await poiResponse.json();
   
   // Filter to only elements with relevant tags (amenity/shop/leisure/public_transport/highway)
   // This removes geometry nodes that are part of ways but have no amenity data

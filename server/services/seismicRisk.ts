@@ -1,6 +1,6 @@
 import type { SeismicRiskData } from '@shared/schema';
 
-const USGS_HAZARD_API = 'https://earthquake.usgs.gov/ws/designmaps/asce7-22.json';
+const USGS_HAZARD_API = 'https://earthquake.usgs.gov/ws/building-codes/asce7-22/calculate';
 
 interface USGSDesignMapsResponse {
   output?: {
@@ -89,7 +89,9 @@ export async function fetchSeismicRisk(lat: number, lon: number): Promise<Seismi
     const raw: USGSDesignMapsResponse = await response.json();
 
     // Extract PGA from first data point
-    const pgaRaw = raw?.output?.data?.[0]?.pga;
+    // New USGS service: response.data.pgam (site-adjusted peak ground acceleration); old: output.data[0].pga
+    const d: any = (raw as any)?.response?.data ?? (raw as any)?.output?.data?.[0];
+    const pgaRaw = d?.pgam ?? d?.pga;
     if (pgaRaw === undefined || pgaRaw === null) {
       console.log('[USGS Seismic] No PGA value in response');
       return null;

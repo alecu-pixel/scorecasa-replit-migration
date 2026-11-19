@@ -1,7 +1,8 @@
 import type { FloodRiskData, NfipClaimsData } from '@shared/schema';
 
 const FEMA_NFHL_URL = 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query';
-const NFIP_CLAIMS_URL = 'https://www.fema.gov/api/open/v2/nfipClaims';
+const ESRI_FLOOD_URL = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Flood_Hazard_Reduced_Set_gdb/FeatureServer/0/query';
+const NFIP_CLAIMS_URL = 'https://www.fema.gov/api/open/v3/NfipClaims';
 
 interface FemaFloodZoneResponse {
   features?: Array<{
@@ -36,7 +37,9 @@ const FLOOD_ZONE_INFO: Record<string, { riskLevel: 'extreme' | 'high' | 'moderat
 function classifyFloodZone(zone: string, subType?: string): typeof FLOOD_ZONE_INFO[string] {
   const normalized = zone?.toUpperCase()?.trim() || '';
 
-  if (normalized === 'X' && subType?.toUpperCase()?.includes('SHADED')) {
+  const sub = subType?.toUpperCase() || '';
+  // 500-year floodplain: FEMA writes it as "0.2 PCT ANNUAL CHANCE..." (older maps: "SHADED")
+  if (normalized === 'X' && (sub.includes('SHADED') || sub.includes('0.2'))) {
     return FLOOD_ZONE_INFO['X_SHADED'];
   }
 
@@ -83,9 +86,9 @@ function estimateFloodInsuranceCost(riskLevel: string, propertyValue: number): {
 async function fetchNfipClaims(censusTract: string): Promise<NfipClaimsData | null> {
   try {
     const params = new URLSearchParams({
-      '$filter': `censusTract eq '${censusTract}'`,
-      '$select': 'censusTract,amountPaidOnBuildingClaim,amountPaidOnContentsClaim,yearOfLoss',
-      '$top': '500',
+      '$filter': `startswith(censusGeoid,'${censusTract}')`,
+      '$select': 'censusGeoid,amountPaidOnBuildingClaim,amountPaidOnContentsClaim,yearOfLoss',
+      '$top': '5000',
       '$format': 'json',
     });
 
@@ -102,7 +105,7 @@ async function fetchNfipClaims(censusTract: string): Promise<NfipClaimsData | nu
 
     const data = await response.json();
     // OpenFEMA v2 returns data under the camelCase dataset name
-    const claims: any[] = data?.nfipClaims || data?.ClaimDataSets || data?.data || [];
+    const claims: any[] = data?.NfipClaims || data?.nfipClaims || data?.ClaimDataSets || data?.data || [];
 
     console.log(`[NFIP] Found ${claims.length} claims for tract ${censusTract}`);
 
@@ -177,17 +180,25 @@ export async function fetchFloodRiskData(lat: number, lon: number, propertyValue
       f: 'json',
     });
 
-    const response = await fetch(`${FEMA_NFHL_URL}?${params}`, {
-      headers: { 'User-Agent': 'ScoreCasa/1.0' },
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!response.ok) {
-      console.log(`[Flood Risk] FEMA API returned ${response.status}`);
-      throw new Error(`FEMA API returned ${response.status}`);
+    // FEMA's own server resets server-to-server connections, so try Esri's public
+    // copy of the same FEMA flood hazard layer first, then FEMA directly.
+    let data: FemaFloodZoneResponse | null = null;
+    for (const base of [ESRI_FLOOD_URL, FEMA_NFHL_URL]) {
+      try {
+        const response = await fetch(`${base}?${params}`, {
+          headers: { 'User-Agent': 'ScoreCasa/1.0 (https://scorecasa.com)' },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const json: any = await response.json();
+        if (json?.error) throw new Error(json.error.message || 'query error');
+        data = json;
+        break;
+      } catch (err: any) {
+        console.log(`[Flood Risk] ${base} failed: ${err.message}`);
+      }
     }
-
-    const data: FemaFloodZoneResponse = await response.json();
+    if (!data) throw new Error('No flood zone source reachable');
 
     if (!data.features || data.features.length === 0) {
       console.log('[Flood Risk] No flood zone data available for this location');
