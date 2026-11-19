@@ -7,7 +7,7 @@ export async function fetchMarketData(postalCode: string): Promise<MarketData> {
     throw new Error('RAPIDAPI_KEY not configured');
   }
 
-  const url = `https://real-estate-market-data-by-zip-code.p.rapidapi.com/zip/${postalCode}`;
+  const url = `https://real-estate-market-data-by-zip-code.p.rapidapi.com/v1/Census/RealEstateData/${encodeURIComponent(postalCode)}`;
   
   console.log('Fetching market data for ZIP:', postalCode);
 
@@ -58,12 +58,14 @@ export async function fetchMarketData(postalCode: string): Promise<MarketData> {
     || data.housingUnits 
     || null;
   
-  const occupiedUnits = data.occupiedUnits 
+  const occupiedUnits = data.occupiedHousingUnits
+    || data.occupiedUnits 
     || data.occupied_units 
     || data.occupied 
     || null;
   
-  const vacantUnits = data.vacantUnits 
+  const vacantUnits = data.vacantHousingUnits
+    || data.vacantUnits 
     || data.vacant_units 
     || data.vacant 
     || null;
