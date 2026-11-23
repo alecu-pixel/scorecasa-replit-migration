@@ -854,7 +854,7 @@ export interface InvestmentAnalysis {
 
 export interface EstimatedPrice {
   price: number;
-  source: 'listing' | 'median' | 'census' | 'default';
+  source: 'listing' | 'estimate' | 'median' | 'census' | 'default';
   sourceDescription: string;
 }
 
@@ -901,6 +901,10 @@ export interface BuyVsRentData {
   recommendationStrength: 'strong' | 'moderate' | 'slight';
   breakEvenYears: number;
   insight: string;
+  basis?: 'property' | 'zip';
+  homeValueUsed?: number;
+  homeValueSource?: string;
+  rentSource?: string;
 }
 
 export interface PropertyTaxData {
@@ -911,6 +915,9 @@ export interface PropertyTaxData {
   vsStateAverage: string;
   taxBurdenLevel: 'high' | 'moderate' | 'low';
   insight: string;
+  basis?: 'property' | 'zip';
+  homeValueUsed?: number;
+  rateSource?: string;
 }
 
 export interface AffordabilityScoreData {
@@ -1296,6 +1303,27 @@ export interface PropertyAnalysisResult {
   investmentAnalysis: InvestmentAnalysis;
   estimatedPropertyPrice: EstimatedPrice;
   affordabilityData: ComprehensiveAffordabilityData | null;
+  // This specific home (Zillow), when an exact address match was found
+  propertyDetails?: {
+    rentEstimate: number | null;
+    valueEstimate: number | null;
+    listPrice: number | null;
+    homeStatus: string | null;
+    taxRate: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    livingArea: number | null;
+    yearBuilt: number | null;
+    homeType: string | null;
+    source: string;
+  } | null;
+  // Typical rent and home value for the ZIP code (Zillow Research indexes)
+  zipMarketIndex?: {
+    typicalRent: number | null;
+    typicalHomeValue: number | null;
+    rentAsOf: string | null;
+    valueAsOf: string | null;
+  } | null;
   forecastData?: ForecastDisplayData | null;
   floodRisk: FloodRiskData | null;
   environmentalRisk?: EnvironmentalRiskData | null;

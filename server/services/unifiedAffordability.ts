@@ -98,7 +98,17 @@ export async function fetchComprehensiveAffordabilityData(
   medianHomeValue: number,
   medianIncome: number,
   medianRent: number,
-  populationGrowth: number = 0
+  populationGrowth: number = 0,
+  // The specific home, when known (Zillow). Buy-vs-rent and property tax then describe this home;
+  // area comparisons (overvaluation, affordability for local incomes) stay at ZIP level.
+  home?: {
+    value: number;
+    valueSource: string;
+    rent: number;
+    rentSource: string;
+    taxRate: number | null;
+    basis: 'property' | 'zip';
+  }
 ): Promise<ComprehensiveAffordabilityData> {
   console.log(`[UnifiedAffordability] Fetching comprehensive data for ZIP ${zipCode}, State ${stateCode}`);
   
@@ -112,8 +122,20 @@ export async function fetchComprehensiveAffordabilityData(
   const currentMortgageRate = mortgageTrends.currentRate;
 
   const overvaluation = calculateOvervaluation(medianHomeValue, medianIncome);
-  const buyVsRent = calculateBuyVsRent(medianHomeValue, medianRent, currentMortgageRate);
-  const propertyTax = calculatePropertyTax(medianHomeValue, stateCode);
+  const homeValue = home?.value || medianHomeValue;
+  const homeRent = home?.rent || medianRent;
+  const buyVsRent = {
+    ...calculateBuyVsRent(homeValue, homeRent, currentMortgageRate, 20, home?.taxRate),
+    basis: home?.basis ?? 'zip',
+    homeValueUsed: Math.round(homeValue),
+    homeValueSource: home?.valueSource ?? 'Census median home value (ZIP)',
+    rentSource: home?.rentSource ?? 'Census median rent (ZIP)',
+  };
+  const propertyTax = {
+    ...calculatePropertyTax(homeValue, stateCode, home?.taxRate),
+    basis: home?.basis ?? 'zip',
+    homeValueUsed: Math.round(homeValue),
+  };
   const affordabilityScore = calculateAffordabilityScore(medianHomeValue, medianIncome, currentMortgageRate);
   const fairMarketRent = analyzeFMRComparison(fairMarketRentData, medianRent);
   const marketTimingSignal = calculateMarketTimingSignal(
@@ -128,6 +150,8 @@ export async function fetchComprehensiveAffordabilityData(
   if (fairMarketRentData.source === 'hud_api') dataSources.push('HUD Fair Market Rent');
   if (buildingPermits.source === 'census_api') dataSources.push('Census Building Permits');
   if (employment.source === 'bls_api') dataSources.push('BLS Employment Data');
+  if (home?.basis === 'property') dataSources.push('Zillow (this home)');
+  else if (home?.valueSource?.includes('Zillow') || home?.rentSource?.includes('Zillow')) dataSources.push('Zillow Research (ZIP)');
   dataSources.push('US Census Bureau ACS');
 
   return {

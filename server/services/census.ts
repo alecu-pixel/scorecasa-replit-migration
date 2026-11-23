@@ -1,8 +1,8 @@
 import type { CensusData, GrowthData } from "@shared/schema";
 
 export async function getCensusData(zipCode: string): Promise<CensusData> {
-  // Use 2023 - the latest available ACS 5-Year data (2019-2023)
-  const year = 2023;
+  // ACS 5-Year 2024 (2020-2024), the latest release (published Dec 2025)
+  const year = 2024;
   const apiKey = process.env.CENSUS_API_KEY || '';
   
   const variables = [
@@ -153,10 +153,10 @@ export async function getCensusData(zipCode: string): Promise<CensusData> {
 }
 
 export async function getCensusGrowthData(zipCode: string): Promise<GrowthData> {
-  // Compare 2022 (2018-2022 data) vs 2023 (2019-2023 data) for 1-year growth
+  // Compare 2023 (2019-2023 data) vs 2024 (2020-2024 data) for 1-year growth
   // Note: Older years require state specification which we don't have from ZIP alone
-  const year1 = 2022;
-  const year2 = 2023;
+  const year1 = 2023;
+  const year2 = 2024;
   
   const variables = 'B19013_001E,B01003_001E,B25001_001E'; // Income, Population, Housing
   

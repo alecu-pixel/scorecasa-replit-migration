@@ -19,6 +19,8 @@ import { lookupOpportunityZone } from "./services/opportunityZone";
 import { getJobsProximity } from "./services/jobsProximity";
 import { fetchEnvironmentalRisk } from "./services/epaEnvironmental";
 import { fetchSeismicRisk } from "./services/seismicRisk";
+import { fetchPropertySnapshot } from "./services/zillowProperty";
+import { getZillowZipIndex } from "./services/zillowZipIndex";
 import { queryFHFAAppreciation } from "./services/dataPipeline/fhfaDownloader";
 import { queryRedfinMarketHeat } from "./services/dataPipeline/redfinDownloader";
 import { queryIRSMigration } from "./services/dataPipeline/irsMigrationDownloader";
@@ -619,6 +621,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Starting analysis for:', address);
 
+      // This home's own figures (Zillow) and the ZIP's typical rent/value (Zillow Research);
+      // started now, awaited where needed. Both resolve to null/empty on failure.
+      const propertySnapshotPromise = fetchPropertySnapshot(address).catch(() => null);
+      const zipIndexPromise = getZillowZipIndex(zipCode).catch(() => null);
+
       // Call real APIs in parallel (including unified crime data)
       const results = await Promise.allSettled([
         getCensusData(zipCode),
@@ -631,6 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]);
 
       const [censusResult, growthResult, walkabilityResult, propertyResult, marketDataResult, fipsResult, crimeResult] = results;
+      const [propertySnapshot, zipIndex] = await Promise.all([propertySnapshotPromise, zipIndexPromise]);
 
       // Check if we have minimum required data
       if (censusResult.status === 'rejected') {
@@ -897,7 +905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (resolvedLat !== null && resolvedLon !== null) {
         try {
-          const estimatedValue = propertyListings?.median_price || demographics?.medianHomeValue || 350000;
+          const estimatedValue = propertySnapshot?.listPrice || propertySnapshot?.valueEstimate || propertyListings?.median_price || demographics?.medianHomeValue || 350000;
           floodRiskData = await fetchFloodRiskData(resolvedLat, resolvedLon, estimatedValue, censusTract);
           console.log(`[Flood Risk] Zone: ${floodRiskData.floodZone}, Risk: ${floodRiskData.riskLevel}, Score: ${floodRiskData.floodScore}, NFIP claims: ${floodRiskData.nfipClaims?.totalClaimsPaid ?? 'n/a'}`);
         } catch (floodError: any) {
@@ -979,19 +987,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let affordabilityData: ComprehensiveAffordabilityData | null = null;
       try {
         const stateCode = extractStateFromAddress(address) || 'TX';
-        const medianHomeValue = demographics.medianHomeValue || marketData?.medianHomeValue || 350000;
+        // ZIP-level figures: Zillow's current indexes first, Census 5-year medians as fallback
+        const medianHomeValue = zipIndex?.typicalHomeValue || demographics.medianHomeValue || marketData?.medianHomeValue || 350000;
         const medianIncome = demographics.medianIncome || 65000;
-        const medianRent = demographics.medianRent || marketData?.medianRent || 1500;
+        const medianRent = zipIndex?.typicalRent || demographics.medianRent || marketData?.medianRent || 1500;
         const populationGrowth = growth.populationGrowth5yr || 0;
-        
-        console.log(`[Affordability] Fetching for ZIP ${zipCode}, State ${stateCode}`);
+
+        // This home: list price if for sale, else Zestimate; Rent Zestimate; local tax rate
+        const homeValue = propertySnapshot?.listPrice || propertySnapshot?.valueEstimate || null;
+        const homeRent = propertySnapshot?.rentEstimate || null;
+        const home = {
+          value: homeValue || medianHomeValue,
+          valueSource: propertySnapshot?.listPrice ? 'List price (Zillow)'
+            : propertySnapshot?.valueEstimate ? 'Zestimate (Zillow)'
+            : zipIndex?.typicalHomeValue ? 'Typical home value in ZIP (Zillow)' : 'Census median home value (ZIP)',
+          rent: homeRent || medianRent,
+          rentSource: homeRent ? 'Rent Zestimate (Zillow)'
+            : zipIndex?.typicalRent ? 'Typical rent in ZIP (Zillow)' : 'Census median rent (ZIP)',
+          taxRate: propertySnapshot?.taxRate ?? null,
+          basis: (homeValue && homeRent ? 'property' : 'zip') as 'property' | 'zip',
+        };
+
+        console.log(`[Affordability] Fetching for ZIP ${zipCode}, State ${stateCode}; home basis: ${home.basis}`);
         affordabilityData = await fetchComprehensiveAffordabilityData(
           zipCode,
           stateCode,
           medianHomeValue,
           medianIncome,
           medianRent,
-          populationGrowth
+          populationGrowth,
+          home
         );
         console.log(`[Affordability] Successfully fetched. Investment Grade: ${affordabilityData.investmentGrade.grade}`);
       } catch (affordabilityError: any) {
@@ -1003,7 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 2. Median listing price in ZIP (representative, not a random comparable)
       // 3. Census median home value
       // 4. Hardcoded default
-      let estimatedPropertyPrice: { price: number; source: 'listing' | 'median' | 'census' | 'default'; sourceDescription: string };
+      let estimatedPropertyPrice: { price: number; source: 'listing' | 'estimate' | 'median' | 'census' | 'default'; sourceDescription: string };
 
       // Attempt to match the searched address against available listings
       const normalizeAddr = (s: string) =>
@@ -1022,6 +1047,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           source: 'listing',
           sourceDescription: 'Listing price for this specific property from active MLS data'
         };
+      } else if (propertySnapshot?.listPrice || propertySnapshot?.valueEstimate) {
+        estimatedPropertyPrice = propertySnapshot.listPrice
+          ? { price: propertySnapshot.listPrice, source: 'listing', sourceDescription: 'Current list price for this property (Zillow)' }
+          : { price: propertySnapshot.valueEstimate!, source: 'estimate', sourceDescription: 'Zestimate for this property (Zillow). Adjust to the actual price for the most accurate estimate.' };
       } else if (propertyListings?.median_price && propertyListings.median_price > 0) {
         estimatedPropertyPrice = {
           price: propertyListings.median_price,
@@ -1060,6 +1089,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         investmentAnalysis,
         estimatedPropertyPrice,
         affordabilityData,
+        propertyDetails: propertySnapshot,
+        zipMarketIndex: zipIndex,
         floodRisk: floodRiskData,
         environmentalRisk: environmentalRiskData,
         seismicRisk: seismicRiskData,

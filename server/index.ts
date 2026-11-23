@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { registerMobileAuthRoutes } from "./mobileAuth";
 import { startScheduler } from "./services/dataPipeline/scheduler";
+import { warmZillowZipIndex } from "./services/zillowZipIndex";
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use((req, res, next) => {
   await setupAuth(app);
   registerMobileAuthRoutes(app);
   const server = await registerRoutes(app);
+  warmZillowZipIndex(); // stream Zillow ZIP rent/value files in the background
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

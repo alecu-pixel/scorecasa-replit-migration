@@ -111,7 +111,7 @@ const DATASETS_TO_EXPLORE: CensusDataset[] = [
 
 export async function exploreCensusData(zipCode: string): Promise<ExplorationResult[]> {
   const apiKey = process.env.CENSUS_API_KEY;
-  const year = 2023; // Latest ACS 5-year data
+  const year = 2024; // Latest ACS 5-year data
   
   const results: ExplorationResult[] = [];
   

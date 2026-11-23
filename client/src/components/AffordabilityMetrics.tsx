@@ -390,6 +390,9 @@ export default function AffordabilityMetrics({ data }: AffordabilityMetricsProps
                 <div className="flex items-center gap-2 mb-3">
                   <Home className="w-4 h-4 text-green-400" />
                   <span className="font-medium text-white">Buy vs Rent</span>
+                  <span className="ml-auto text-[11px] text-gray-400">
+                    {buyVsRent.basis === 'property' ? 'This home' : 'ZIP average'}
+                  </span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -420,7 +423,15 @@ export default function AffordabilityMetrics({ data }: AffordabilityMetricsProps
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 mt-3 border-t border-gray-700 pt-2">
-                  Break-even in ~{buyVsRent.breakEvenYears} years
+                  {buyVsRent.breakEvenYears > 0
+                    ? `Buying beats renting after ~${buyVsRent.breakEvenYears} year${buyVsRent.breakEvenYears === 1 ? '' : 's'}`
+                    : 'Buying does not beat renting within 30 years'}
+                  {buyVsRent.homeValueUsed ? (
+                    <span className="block mt-1 text-gray-500">
+                      Price ${buyVsRent.homeValueUsed.toLocaleString()} ({buyVsRent.homeValueSource}), 20% down.
+                      Rent: {buyVsRent.rentSource}.
+                    </span>
+                  ) : null}
                 </p>
               </Card>
 
@@ -457,6 +468,11 @@ export default function AffordabilityMetrics({ data }: AffordabilityMetricsProps
                 </div>
                 <p className="text-xs text-gray-400 mt-3 border-t border-gray-700 pt-2">
                   {propertyTax.vsStateAverage}
+                  {propertyTax.homeValueUsed ? (
+                    <span className="block mt-1 text-gray-500">
+                      On ${propertyTax.homeValueUsed.toLocaleString()} at {propertyTax.rateSource === 'Local rate (Zillow)' ? 'the local rate (Zillow)' : 'the state average rate'}.
+                    </span>
+                  ) : null}
                 </p>
               </Card>
             </div>

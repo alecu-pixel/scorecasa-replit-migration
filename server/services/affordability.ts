@@ -18,6 +18,11 @@ export interface BuyVsRentData {
   recommendationStrength: 'strong' | 'moderate' | 'slight';
   breakEvenYears: number;
   insight: string;
+  // Where the figures come from: this home (Zillow) or the ZIP code's typical home
+  basis?: 'property' | 'zip';
+  homeValueUsed?: number;
+  homeValueSource?: string;
+  rentSource?: string;
 }
 
 export interface PropertyTaxData {
@@ -28,6 +33,9 @@ export interface PropertyTaxData {
   vsStateAverage: string;
   taxBurdenLevel: 'high' | 'moderate' | 'low';
   insight: string;
+  basis?: 'property' | 'zip';
+  homeValueUsed?: number;
+  rateSource?: string;
 }
 
 export interface AffordabilityScore {
@@ -144,7 +152,8 @@ export function calculateBuyVsRent(
   homePrice: number,
   medianRent: number,
   mortgageRate: number,
-  downPaymentPercent: number = 20
+  downPaymentPercent: number = 20,
+  taxRatePercent?: number | null
 ): BuyVsRentData {
   if (homePrice <= 0 || medianRent <= 0) {
     return {
@@ -167,9 +176,9 @@ export function calculateBuyVsRent(
     (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
     (Math.pow(1 + monthlyRate, numPayments) - 1);
   
-  const monthlyPropertyTax = (homePrice * 0.012) / 12;
+  const monthlyPropertyTax = (homePrice * ((taxRatePercent && taxRatePercent > 0 ? taxRatePercent : 1.2) / 100)) / 12;
   const monthlyInsurance = (homePrice * 0.005) / 12;
-  
+
   const monthlyMortgagePayment = monthlyPrincipalInterest + monthlyPropertyTax + monthlyInsurance;
   const buyVsRentRatio = monthlyMortgagePayment / medianRent;
   const buyVsRentDifferential = ((monthlyMortgagePayment - medianRent) / medianRent) * 100;
@@ -192,19 +201,28 @@ export function calculateBuyVsRent(
   const annualAppreciation = 0.03;
   const downPayment = homePrice * (downPaymentPercent / 100);
   
+  // Break-even: the first year in which buying, then selling, has cost less than renting.
+  // Buying: down payment + ~3% closing costs up front; each year the full monthly payment
+  // (incl. tax and insurance) plus ~1% of value in upkeep; on sale you keep the home's value
+  // minus ~6% selling costs and the remaining loan balance. 0 = not within 30 years.
+  const closingCosts = homePrice * 0.03;
+  const maintenanceRate = 0.01;
+  const sellingCostRate = 0.06;
   let breakEvenYears = 0;
   let cumulativeRent = 0;
-  let cumulativeBuyCost = downPayment;
-  
+  let cumulativeBuyCost = downPayment + closingCosts;
+  let balance = loanAmount;
+
   for (let year = 1; year <= 30; year++) {
-    const yearlyRent = medianRent * 12 * Math.pow(1 + annualRentIncrease, year - 1);
-    const yearlyMortgage = monthlyMortgagePayment * 12;
-    const equity = homePrice * Math.pow(1 + annualAppreciation, year) - loanAmount;
-    
-    cumulativeRent += yearlyRent;
-    cumulativeBuyCost += yearlyMortgage;
-    
-    if (cumulativeBuyCost - equity < cumulativeRent && breakEvenYears === 0) {
+    const value = homePrice * Math.pow(1 + annualAppreciation, year);
+    cumulativeRent += medianRent * 12 * Math.pow(1 + annualRentIncrease, year - 1);
+    cumulativeBuyCost += monthlyMortgagePayment * 12 + value * maintenanceRate;
+    for (let m = 0; m < 12; m++) {
+      balance -= monthlyPrincipalInterest - balance * monthlyRate;
+    }
+    const netProceedsFromSale = value * (1 - sellingCostRate) - Math.max(balance, 0);
+
+    if (cumulativeBuyCost - netProceedsFromSale < cumulativeRent) {
       breakEvenYears = year;
       break;
     }
@@ -230,11 +248,14 @@ export function calculateBuyVsRent(
 
 export function calculatePropertyTax(
   homeValue: number,
-  stateAbbr: string
+  stateAbbr: string,
+  localTaxRate?: number | null
 ): PropertyTaxData {
-  const stateTaxRate = STATE_TAX_RATES[stateAbbr.toUpperCase()] || 1.1;
+  const stateAverageRate = STATE_TAX_RATES[stateAbbr.toUpperCase()] || 1.1;
+  // Prefer the home's own (county) rate when known; otherwise the state average.
+  const stateTaxRate = localTaxRate && localTaxRate > 0 ? localTaxRate : stateAverageRate;
   const nationalAverageRate = 1.1;
-  
+
   const estimatedAnnualTax = homeValue * (stateTaxRate / 100);
   const estimatedMonthlyTax = estimatedAnnualTax / 12;
   
@@ -263,7 +284,8 @@ export function calculatePropertyTax(
     estimatedAnnualTax: Math.round(estimatedAnnualTax),
     estimatedMonthlyTax: Math.round(estimatedMonthlyTax),
     effectiveTaxRate: stateTaxRate,
-    stateTaxRateAverage: stateTaxRate,
+    stateTaxRateAverage: stateAverageRate,
+    rateSource: localTaxRate && localTaxRate > 0 ? 'Local rate (Zillow)' : 'State average',
     vsStateAverage,
     taxBurdenLevel,
     insight

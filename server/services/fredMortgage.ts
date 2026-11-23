@@ -35,12 +35,33 @@ interface FREDSeriesResponse {
   observations: FREDObservation[];
 }
 
+const csvCache = new Map<string, { at: number; rows: FREDObservation[] }>();
+
+// Newest first, like the API with sort_order=desc. Cached for 6 hours (the series is weekly).
+async function fetchFREDSeriesCsv(seriesId: string, limit: number): Promise<FREDObservation[]> {
+  const hit = csvCache.get(seriesId);
+  if (hit && Date.now() - hit.at < 6 * 60 * 60 * 1000) return hit.rows.slice(0, limit);
+  try {
+    const res = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${seriesId}`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = (await res.text()).trim().split(/\r?\n/).slice(1)
+      .map(line => { const [date, value] = line.split(','); return { date, value } as FREDObservation; })
+      .filter(r => r.date && r.value && r.value !== '.')
+      .reverse();
+    csvCache.set(seriesId, { at: Date.now(), rows });
+    return rows.slice(0, limit);
+  } catch (error: any) {
+    console.error('[FRED] Public CSV error:', error.message);
+    return [];
+  }
+}
+
 async function fetchFREDSeries(seriesId: string, limit: number = 100): Promise<FREDObservation[]> {
   const apiKey = process.env.FRED_API_KEY;
-  
+
   if (!apiKey) {
-    console.log('[FRED] No API key configured, using fallback data');
-    return [];
+    // No key needed: FRED publishes every series as a public CSV.
+    return fetchFREDSeriesCsv(seriesId, limit);
   }
 
   const url = `${FRED_API_BASE}/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=${limit}`;
