@@ -90,6 +90,52 @@ function categorizeAmenity(tags: any): { type: string; category: string } {
 const OSM_USER_AGENT = 'ScoreCasa/1.0 (https://scorecasa.com)';
 const OVERPASS_SERVERS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
 
+// Geoapify Places requests. Tested 2026-11-23: mixing sub-categories in one request returns only a
+// fraction of the places (and adding any sport.* sub-category returns sport places only), while
+// top-level categories combine correctly. So: one broad request, one small one for sports.
+// categorizeAmenity() keeps only the place types the walk score counts. Parking is left out on
+// purpose: lots are everywhere and would push every score to 100.
+const GEOAPIFY_CATEGORY_GROUPS: Array<{ categories: string; limit: number }> = [
+  { categories: 'commercial,catering,healthcare,education,public_transport,leisure,entertainment,service', limit: 300 },
+  { categories: 'sport.fitness,sport.sports_centre,sport.swimming_pool', limit: 50 },
+];
+
+async function fetchGeoapifyElements(lat: number, lon: number, radius: number): Promise<{ elements: any[] } | null> {
+  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
+  if (!apiKey) return null;
+  try {
+    // ~1 credit per 20 places returned; the free plan has 3,000 credits a day.
+    const groups = await Promise.all(GEOAPIFY_CATEGORY_GROUPS.map(async ({ categories, limit }) => {
+      const params = new URLSearchParams({
+        categories,
+        filter: `circle:${lon},${lat},${radius}`,
+        bias: `proximity:${lon},${lat}`,
+        limit: String(limit),
+        apiKey,
+      });
+      const res = await fetch(`https://api.geoapify.com/v2/places?${params}`, { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: any = await res.json();
+      return data.features || [];
+    }));
+    const seen = new Set<string>();
+    const elements: any[] = [];
+    for (const f of groups.flat()) {
+      const p = f.properties || {};
+      const raw = p.datasource?.raw || {};
+      const id = String(raw.osm_id ?? p.place_id ?? `${p.lat},${p.lon}`);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      elements.push({ id, lat: p.lat, lon: p.lon, tags: { ...raw, name: raw.name ?? p.name } });
+    }
+    console.log(`[Walkability] Geoapify returned ${elements.length} places`);
+    return { elements };
+  } catch (err: any) {
+    console.warn('[Walkability] Geoapify failed, falling back to Overpass:', err.message);
+    return null;
+  }
+}
+
 export async function calculateWalkability(address: string): Promise<WalkabilityData> {
   // Step 1: Geocode the address using Nominatim (OSM)
   const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
@@ -137,10 +183,12 @@ out center;`;
 
   console.log('Querying Overpass API for nearby amenities...');
 
-  // Public Overpass servers are often busy: try the main one, then a mirror.
-  let poiData: any = null;
+  // Geoapify (managed OpenStreetMap data, free tier) is fast and reliable, so try it first.
+  // Its features carry the original OSM tags, so they are converted to Overpass-style elements.
+  let poiData: any = await fetchGeoapifyElements(lat, lon, radius);
   let lastError = '';
-  for (const server of OVERPASS_SERVERS) {
+  // Public Overpass servers are often busy: fall back to the main one, then a mirror.
+  for (const server of poiData ? [] : OVERPASS_SERVERS) {
     try {
       const res = await fetch(server, {
         method: 'POST',
@@ -207,7 +255,9 @@ out center;`;
     }
   });
 
-  const amenities: Amenity[] = Array.from(amenityMap.values());
+  // Only count the place types the walk score is built on (Geoapify's broad categories also
+  // return things like hair salons and offices, which categorizeAmenity files as 'Other').
+  const amenities: Amenity[] = Array.from(amenityMap.values()).filter(a => a.category !== 'Other');
 
   // Sort amenities by distance
   amenities.sort((a, b) => a.distance - b.distance);
