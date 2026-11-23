@@ -593,7 +593,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check for cached analysis from this month (any user)
       const cachedAnalysis = await storage.findCachedAnalysisThisMonth(addressNormalized);
       
-      if (cachedAnalysis && cachedAnalysis.resultData) {
+      // Only reuse reports built with the current data model (property-level figures added 2026-11-23)
+      if (cachedAnalysis && cachedAnalysis.resultData && 'zipMarketIndex' in (cachedAnalysis.resultData as any)) {
         console.log(`[Cache Hit] Returning cached analysis for: ${address} (originally by user ${cachedAnalysis.userId})`);
         
         // Deduct credit even for cached results
