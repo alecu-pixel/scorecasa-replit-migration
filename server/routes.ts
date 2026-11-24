@@ -41,7 +41,7 @@ async function getCountyFIPS(address: string): Promise<string | null> {
   try {
     const geocodeUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&addressdetails=1&limit=1`;
     const response = await fetch(geocodeUrl, {
-      headers: { 'User-Agent': 'PropertyInvestmentAnalyzer/1.0' }
+      headers: { 'User-Agent': 'ScoreCasa/1.0 (https://scorecasa.com)' }
     });
 
     if (!response.ok) {
@@ -1016,6 +1016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rentSource: homeRent ? 'Rent Zestimate (Zillow)'
             : zipIndex?.typicalRent ? 'Typical rent in ZIP (Zillow)' : 'Census median rent (ZIP)',
           taxRate: propertySnapshot?.taxRate ?? null,
+          bedrooms: propertySnapshot?.bedrooms ?? null,
           basis: (homeValue && homeRent ? 'property' : 'zip') as 'property' | 'zip',
         };
 
@@ -1027,7 +1028,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           medianIncome,
           medianRent,
           populationGrowth,
-          home
+          home,
+          fipsCode || (censusTract ? String(censusTract).slice(0, 5) : null)
         );
         console.log(`[Affordability] Successfully fetched. Investment Grade: ${affordabilityData.investmentGrade.grade}`);
       } catch (affordabilityError: any) {

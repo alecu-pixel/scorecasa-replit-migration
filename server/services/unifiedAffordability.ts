@@ -107,14 +107,16 @@ export async function fetchComprehensiveAffordabilityData(
     rent: number;
     rentSource: string;
     taxRate: number | null;
+    bedrooms?: number | null;
     basis: 'property' | 'zip';
-  }
+  },
+  countyFips?: string | null
 ): Promise<ComprehensiveAffordabilityData> {
   console.log(`[UnifiedAffordability] Fetching comprehensive data for ZIP ${zipCode}, State ${stateCode}`);
-  
+
   const [mortgageTrends, fairMarketRentData, buildingPermits, employment] = await Promise.all([
     fetchMortgageTrends(),
-    fetchFairMarketRent(zipCode, medianRent, stateCode),
+    fetchFairMarketRent(zipCode, medianRent, stateCode, countyFips),
     fetchBuildingPermits(stateCode),
     fetchEmploymentData(stateCode)
   ]);
@@ -137,7 +139,9 @@ export async function fetchComprehensiveAffordabilityData(
     homeValueUsed: Math.round(homeValue),
   };
   const affordabilityScore = calculateAffordabilityScore(medianHomeValue, medianIncome, currentMortgageRate);
-  const fairMarketRent = analyzeFMRComparison(fairMarketRentData, medianRent);
+  // Compare HUD's rent for this home's bedroom count (2 if unknown) with its expected market rent
+  const bedrooms = Math.max(0, Math.min(4, Math.round(home?.bedrooms ?? 2)));
+  const fairMarketRent = analyzeFMRComparison(fairMarketRentData, homeRent, bedrooms);
   const marketTimingSignal = calculateMarketTimingSignal(
     overvaluation,
     mortgageTrends.trendDirection,

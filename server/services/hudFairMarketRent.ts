@@ -24,58 +24,67 @@ export interface FMRComparison {
 
 const HUD_API_BASE = 'https://www.huduser.gov/hudapi/public/fmr';
 
-async function fetchFromHUD(zipCode: string): Promise<FairMarketRent | null> {
-  const hudToken = process.env.HUD_API_KEY || process.env.HUD_TOKEN;
-  
+// HUD's API is keyed by county (entity id = 5-digit county FIPS + "99999"), not ZIP.
+// In "small area" metros (e.g. Houston) the answer lists rents for every ZIP in the county;
+// elsewhere it is one county/metro-wide set. Cached per county for a week (HUD updates yearly).
+const countyCache = new Map<string, { at: number; data: any }>();
+
+async function fetchCountyFMR(countyFips: string, hudToken: string): Promise<any | null> {
+  const hit = countyCache.get(countyFips);
+  if (hit && Date.now() - hit.at < 7 * 24 * 60 * 60 * 1000) return hit.data;
+  const response = await fetch(`${HUD_API_BASE}/data/${countyFips}99999`, {
+    headers: { 'Authorization': `Bearer ${hudToken}`, 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) throw new Error(`HUD API returned ${response.status}`);
+  const data = (await response.json())?.data ?? null;
+  countyCache.set(countyFips, { at: Date.now(), data });
+  return data;
+}
+
+async function fetchFromHUD(zipCode: string, countyFips?: string | null): Promise<FairMarketRent | null> {
+  const hudToken = (process.env.HUD_API_KEY || process.env.HUD_TOKEN)?.trim();
   if (!hudToken) {
-    console.log('[HUD] No API key configured');
+    console.log('[HUD] No API token configured');
+    return null;
+  }
+  if (!countyFips || !/^\d{5}$/.test(countyFips)) {
+    console.log(`[HUD] No county FIPS for ZIP ${zipCode}; cannot query HUD`);
     return null;
   }
 
-  const currentYear = new Date().getFullYear();
-  const fiscalYear = currentYear;
-  
   try {
-    const url = `${HUD_API_BASE}/data/${zipCode}?year=${fiscalYear}`;
-    console.log(`[HUD] Fetching FMR for ZIP ${zipCode}, FY${fiscalYear}`);
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${hudToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      console.log(`[HUD] API returned ${response.status}`);
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (!data || !data.data || !data.data.basicdata) {
+    const data = await fetchCountyFMR(countyFips, hudToken);
+    if (!data?.basicdata) {
       console.log('[HUD] Unexpected response format');
       return null;
     }
+    const rows = Array.isArray(data.basicdata) ? data.basicdata : [data.basicdata];
+    const smallArea = data.smallarea_status === '1';
+    // ZIP-level row when HUD publishes Small Area FMRs, otherwise the area-wide row
+    const row = rows.find((r: any) => r.zip_code === zipCode)
+      || rows.find((r: any) => !r.zip_code || /msa/i.test(String(r.zip_code)))
+      || rows[0];
+    const usesZipRow = row?.zip_code === zipCode;
+    const pick = (r: any, ...names: string[]) => { for (const n of names) if (Number(r?.[n]) > 0) return Number(r[n]); return 0; };
 
-    const basicData = data.data.basicdata;
-    
+    console.log(`[HUD] FY${data.year} FMR for ZIP ${zipCode} (${usesZipRow ? 'ZIP level' : 'area level'}), ${data.county_name}`);
     return {
       zipCode,
-      countyName: basicData.county_name || 'Unknown County',
-      stateCode: basicData.state_name || '',
-      fiscalYear,
-      efficiency: basicData.Efficiency || 0,
-      oneBedroom: basicData.One_Bedroom || 0,
-      twoBedroom: basicData.Two_Bedroom || 0,
-      threeBedroom: basicData.Three_Bedroom || 0,
-      fourBedroom: basicData.Four_Bedroom || 0,
-      smallAreaFMR: basicData.smallarea_status === '1',
-      metroPrimaryEstimate: basicData.metro === '1',
+      countyName: data.county_name || data.area_name || 'Unknown County',
+      stateCode: '',
+      fiscalYear: parseInt(data.year) || new Date().getFullYear(),
+      efficiency: pick(row, 'Efficiency'),
+      oneBedroom: pick(row, 'One-Bedroom', 'One_Bedroom'),
+      twoBedroom: pick(row, 'Two-Bedroom', 'Two_Bedroom'),
+      threeBedroom: pick(row, 'Three-Bedroom', 'Three_Bedroom'),
+      fourBedroom: pick(row, 'Four-Bedroom', 'Four_Bedroom'),
+      smallAreaFMR: smallArea && usesZipRow,
+      metroPrimaryEstimate: data.metro_status === '1',
       source: 'hud_api'
     };
-  } catch (error) {
-    console.error('[HUD] API error:', error);
+  } catch (error: any) {
+    console.error('[HUD] API error:', error.message);
     return null;
   }
 }
@@ -107,9 +116,10 @@ function estimateFMRFromCensus(
 export async function fetchFairMarketRent(
   zipCode: string,
   medianRentFallback: number,
-  stateCode: string
+  stateCode: string,
+  countyFips?: string | null
 ): Promise<FairMarketRent> {
-  const hudData = await fetchFromHUD(zipCode);
+  const hudData = await fetchFromHUD(zipCode, countyFips);
   
   if (hudData) {
     return hudData;

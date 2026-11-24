@@ -91,49 +91,60 @@ function buildInsight(pm25: number, ozone: number, usAqi: number, riskLevel: str
 
 interface AirReading { usAqi: number; pm25: number; ozone: number; no2: number; source: string }
 
-// EPA AQI breakpoints, used to turn AirNow's per-pollutant AQI back into concentrations.
-// [aqiLow, aqiHigh, concLow, concHigh]
-const PM25_BREAKPOINTS = [ // μg/m³, 24-hour (EPA 2024 table)
-  [0, 50, 0, 9.0], [51, 100, 9.1, 35.4], [101, 150, 35.5, 55.4],
-  [151, 200, 55.5, 125.4], [201, 300, 125.5, 225.4], [301, 500, 225.5, 325.4],
-];
-const OZONE_BREAKPOINTS = [ // ppm, 8-hour
-  [0, 50, 0, 0.054], [51, 100, 0.055, 0.070], [101, 150, 0.071, 0.085],
-  [151, 200, 0.086, 0.105], [201, 300, 0.106, 0.200],
-];
-function aqiToConcentration(aqi: number, table: number[][]): number {
-  const row = table.find(([lo, hi]) => aqi >= lo && aqi <= hi) || table[table.length - 1];
-  const [aLo, aHi, cLo, cHi] = row;
-  return cLo + ((Math.min(aqi, aHi) - aLo) * (cHi - cLo)) / (aHi - aLo);
-}
-
-// EPA AirNow: official US monitoring stations, free API key, commercial use allowed.
+// EPA AirNow "Observations by Monitoring Site" (the per-area "current observation" services were
+// retired on 2026-10-01). Official US monitors, free API key, commercial use allowed.
+// Takes the nearest monitor's latest hourly reading for each pollutant, widening the search box
+// if nothing reports nearby.
 async function fetchAirNow(lat: number, lon: number, apiKey: string): Promise<AirReading | null> {
-  const params = new URLSearchParams({
-    format: 'application/json',
-    latitude: lat.toFixed(4),
-    longitude: lon.toFixed(4),
-    distance: '50', // miles: nearest reporting monitors
-    API_KEY: apiKey,
-  });
-  const response = await fetch(`https://www.airnowapi.org/aq/observation/latLong/current/?${params}`, {
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok) throw new Error(`AirNow returned ${response.status}`);
-  const rows: any[] = await response.json();
-  if (!Array.isArray(rows) || rows.length === 0) return null;
-  const aqiOf = (name: string) => rows.find(r => String(r.ParameterName).toUpperCase() === name)?.AQI;
-  const pmAqi = aqiOf('PM2.5');
-  const o3Aqi = aqiOf('O3');
-  const overall = Math.max(...rows.map(r => Number(r.AQI) || 0));
-  return {
-    usAqi: overall,
-    pm25: typeof pmAqi === 'number' ? parseFloat(aqiToConcentration(pmAqi, PM25_BREAKPOINTS).toFixed(1)) : 0,
-    // ppm -> μg/m³ for ozone (×1960 at 25 °C), matching the units used elsewhere in this module
-    ozone: typeof o3Aqi === 'number' ? Math.round(aqiToConcentration(o3Aqi, OZONE_BREAKPOINTS) * 1960) : 0,
-    no2: 0, // AirNow reports AQI for PM2.5/O3 at most stations; NO2 is rarely available
-    source: `EPA AirNow (${rows[0]?.ReportingArea || 'nearest monitor'})`,
+  const hourUtc = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 3600_000).toISOString().slice(0, 13);
+  const distKm = (a: number, b: number) => {
+    const dLat = (a - lat) * 111;
+    const dLon = (b - lon) * 111 * Math.cos(lat * Math.PI / 180);
+    return Math.sqrt(dLat * dLat + dLon * dLon);
   };
+
+  for (const span of [0.35, 1.0]) { // ~25 miles, then ~70 miles
+    const params = new URLSearchParams({
+      startDate: hourUtc(4),
+      endDate: hourUtc(0),
+      parameters: 'OZONE,PM25,NO2',
+      BBOX: [lon - span, lat - span, lon + span, lat + span].map(n => n.toFixed(4)).join(','),
+      dataType: 'B', // AQI and concentration
+      format: 'application/json',
+      verbose: '1',
+      monitorType: '0',
+      includerawconcentrations: '0',
+      API_KEY: apiKey,
+    });
+    const response = await fetch(`https://www.airnowapi.org/aq/data/?${params}`, { signal: AbortSignal.timeout(12000) });
+    if (!response.ok) throw new Error(`AirNow returned ${response.status}`);
+    const rows: any[] = await response.json();
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+
+    // Nearest monitor per pollutant, then its most recent hour
+    const nearest = (param: string) => {
+      const list = rows.filter(r => r.Parameter === param && Number(r.Value) >= 0);
+      if (!list.length) return null;
+      list.sort((a, b) => distKm(a.Latitude, a.Longitude) - distKm(b.Latitude, b.Longitude) || String(b.UTC).localeCompare(String(a.UTC)));
+      const site = list[0].SiteName;
+      return list.filter(r => r.SiteName === site).sort((a, b) => String(b.UTC).localeCompare(String(a.UTC)))[0];
+    };
+    const pm = nearest('PM2.5');
+    const o3 = nearest('OZONE');
+    const no2 = nearest('NO2');
+    if (!pm && !o3) continue;
+
+    const usAqi = Math.max(Number(pm?.AQI) || 0, Number(o3?.AQI) || 0);
+    const sites = Array.from(new Set([pm?.SiteName, o3?.SiteName].filter(Boolean)));
+    return {
+      usAqi,
+      pm25: pm ? Number(pm.Value) : 0,
+      ozone: o3 ? Math.round(Number(o3.Value) * 1.96) : 0, // ppb -> μg/m³ (25 °C)
+      no2: no2 ? Math.round(Number(no2.Value) * 1.88) : 0,   // ppb -> μg/m³
+      source: `EPA AirNow (${sites.join(', ')})`,
+    };
+  }
+  return null;
 }
 
 // Open-Meteo: only with a paid licence (its free tier is non-commercial). Uses the customer endpoint.
