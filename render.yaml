@@ -31,6 +31,8 @@ services:
         sync: false
       - key: GEOAPIFY_API_KEY
         sync: false
+      - key: AIRNOW_API_KEY
+        sync: false
       - key: CENSUS_API_KEY
         sync: false
       - key: RENTCAST_API_KEY

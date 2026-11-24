@@ -1,13 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { analyzePropertySchema, type PropertyAnalysisResult, type SchoolData, type SchoolInfo, type CrimeData, type ComprehensiveAffordabilityData, type FloodRiskData, type EnvironmentalRiskData, type SeismicRiskData } from "@shared/schema";
+import { analyzePropertySchema, type PropertyAnalysisResult, type SchoolData, type SchoolInfo, type CrimeData, type ComprehensiveAffordabilityData, type FloodRiskData, type EnvironmentalRiskData, type SeismicRiskData, type MarketData } from "@shared/schema";
 import { getCensusData, getCensusGrowthData } from "./services/census";
 import { calculateWalkability } from "./services/walkability";
 import { calculateInvestmentScore } from "./services/scoring";
 import { fetchPropertyListings } from "./services/property";
 import { fetchSchoolData } from "./services/school";
 import { fetchSchoolDiggerData, getStateFromAddress } from "./services/schooldigger";
-import { fetchMarketData } from "./services/marketData";
+// Market data now comes from Census + Zillow ZIP index (see marketData in the analysis route)
 import { fetchStateCrimeData, extractStateFromAddress } from "./services/fbiCrime";
 import { fetchEnrichedCrimeData, convertToLegacyCrimeData, type EnrichedCrimeData } from "./services/unifiedCrime";
 import { exploreCensusData } from "./services/censusExploration";
@@ -633,12 +633,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         getCensusGrowthData(zipCode),
         calculateWalkability(address),
         fetchPropertyListings(zipCode),
-        fetchMarketData(zipCode),
         getCountyFIPS(address),
         fetchEnrichedCrimeData(zipCode, address)
       ]);
 
-      const [censusResult, growthResult, walkabilityResult, propertyResult, marketDataResult, fipsResult, crimeResult] = results;
+      const [censusResult, growthResult, walkabilityResult, propertyResult, fipsResult, crimeResult] = results;
       const [propertySnapshot, zipIndex] = await Promise.all([propertySnapshotPromise, zipIndexPromise]);
 
       // Check if we have minimum required data
@@ -663,9 +662,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? propertyResult.value
         : null;
 
-      const marketData = marketDataResult.status === 'fulfilled'
-        ? marketDataResult.value
-        : null;
+      // ZIP market figures, built from data already fetched (the paid "market data by ZIP"
+      // API only repackaged these same Census numbers): Zillow's current typical value/rent
+      // when available, Census ACS for the rest.
+      const vacantUnits = Math.round((demographics.housingUnits || 0) * (demographics.vacancyRate || 0) / 100);
+      const marketData: MarketData | null = demographics ? {
+        zipCode,
+        medianHomeValue: zipIndex?.typicalHomeValue || demographics.medianHomeValue || null,
+        medianRent: zipIndex?.typicalRent || demographics.medianRent || null,
+        homeownershipRate: demographics.ownerOccupiedPct ?? null,
+        totalHousingUnits: demographics.housingUnits || null,
+        occupiedUnits: demographics.housingUnits ? demographics.housingUnits - vacantUnits : null,
+        vacantUnits: demographics.housingUnits ? vacantUnits : null,
+        vacancyRate: demographics.vacancyRate ?? null,
+      } : null;
 
       const fipsCode = fipsResult.status === 'fulfilled' ? fipsResult.value : null;
 
@@ -1105,7 +1115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           growth: growthResult.status === 'fulfilled' ? 'success' : 'error',
           walkability: walkabilityResult.status === 'fulfilled' ? 'success' : 'error',
           propertyListings: propertyResult.status === 'fulfilled' ? 'success' : 'error',
-          marketData: marketDataResult.status === 'fulfilled' ? 'success' : 'error',
+          marketData: marketData ? 'success' : 'error',
           schools: schools ? 'success' : 'error',
           crimeData: enrichedCrimeData ? 'success' : 'error',
           affordability: affordabilityData ? 'success' : 'error',

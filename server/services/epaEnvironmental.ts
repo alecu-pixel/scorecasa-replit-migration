@@ -1,6 +1,7 @@
 import type { EnvironmentalRiskData } from '@shared/schema';
 
-const OPEN_METEO_AQ_API = 'https://air-quality-api.open-meteo.com/v1/air-quality';
+// Paid-licence endpoint; the free air-quality-api.open-meteo.com is non-commercial only.
+const OPEN_METEO_AQ_API = 'https://customer-air-quality-api.open-meteo.com/v1/air-quality';
 
 function classifyRisk(score: number): EnvironmentalRiskData['riskLevel'] {
   if (score < 20) return 'very_low';
@@ -88,37 +89,95 @@ function buildInsight(pm25: number, ozone: number, usAqi: number, riskLevel: str
   return `Air quality shows elevated pollution near this property (US AQI: ${usAqi}, ${aqiLabel}). Regular exposure to air pollution at this level may be a consideration for some buyers.`;
 }
 
+interface AirReading { usAqi: number; pm25: number; ozone: number; no2: number; source: string }
+
+// EPA AQI breakpoints, used to turn AirNow's per-pollutant AQI back into concentrations.
+// [aqiLow, aqiHigh, concLow, concHigh]
+const PM25_BREAKPOINTS = [ // μg/m³, 24-hour (EPA 2024 table)
+  [0, 50, 0, 9.0], [51, 100, 9.1, 35.4], [101, 150, 35.5, 55.4],
+  [151, 200, 55.5, 125.4], [201, 300, 125.5, 225.4], [301, 500, 225.5, 325.4],
+];
+const OZONE_BREAKPOINTS = [ // ppm, 8-hour
+  [0, 50, 0, 0.054], [51, 100, 0.055, 0.070], [101, 150, 0.071, 0.085],
+  [151, 200, 0.086, 0.105], [201, 300, 0.106, 0.200],
+];
+function aqiToConcentration(aqi: number, table: number[][]): number {
+  const row = table.find(([lo, hi]) => aqi >= lo && aqi <= hi) || table[table.length - 1];
+  const [aLo, aHi, cLo, cHi] = row;
+  return cLo + ((Math.min(aqi, aHi) - aLo) * (cHi - cLo)) / (aHi - aLo);
+}
+
+// EPA AirNow: official US monitoring stations, free API key, commercial use allowed.
+async function fetchAirNow(lat: number, lon: number, apiKey: string): Promise<AirReading | null> {
+  const params = new URLSearchParams({
+    format: 'application/json',
+    latitude: lat.toFixed(4),
+    longitude: lon.toFixed(4),
+    distance: '50', // miles: nearest reporting monitors
+    API_KEY: apiKey,
+  });
+  const response = await fetch(`https://www.airnowapi.org/aq/observation/latLong/current/?${params}`, {
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`AirNow returned ${response.status}`);
+  const rows: any[] = await response.json();
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const aqiOf = (name: string) => rows.find(r => String(r.ParameterName).toUpperCase() === name)?.AQI;
+  const pmAqi = aqiOf('PM2.5');
+  const o3Aqi = aqiOf('O3');
+  const overall = Math.max(...rows.map(r => Number(r.AQI) || 0));
+  return {
+    usAqi: overall,
+    pm25: typeof pmAqi === 'number' ? parseFloat(aqiToConcentration(pmAqi, PM25_BREAKPOINTS).toFixed(1)) : 0,
+    // ppm -> μg/m³ for ozone (×1960 at 25 °C), matching the units used elsewhere in this module
+    ozone: typeof o3Aqi === 'number' ? Math.round(aqiToConcentration(o3Aqi, OZONE_BREAKPOINTS) * 1960) : 0,
+    no2: 0, // AirNow reports AQI for PM2.5/O3 at most stations; NO2 is rarely available
+    source: `EPA AirNow (${rows[0]?.ReportingArea || 'nearest monitor'})`,
+  };
+}
+
+// Open-Meteo: only with a paid licence (its free tier is non-commercial). Uses the customer endpoint.
+async function fetchOpenMeteo(lat: number, lon: number, apiKey: string): Promise<AirReading | null> {
+  const params = new URLSearchParams({
+    latitude: lat.toFixed(6),
+    longitude: lon.toFixed(6),
+    current: 'us_aqi,pm2_5,ozone,carbon_monoxide,nitrogen_dioxide,dust',
+    domains: 'cams_global',
+    apikey: apiKey,
+  });
+  const response = await fetch(`${OPEN_METEO_AQ_API}?${params.toString()}`, {
+    headers: { 'User-Agent': 'ScoreCasa/1.0 (https://scorecasa.com)' },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`Open-Meteo AQ API returned ${response.status}`);
+  const current = (await response.json())?.current;
+  if (!current) return null;
+  return {
+    usAqi: current.us_aqi ?? 0,
+    pm25: current.pm2_5 ?? 0,
+    ozone: current.ozone ?? 0,
+    no2: current.nitrogen_dioxide ?? 0,
+    source: 'Open-Meteo AQ (CAMS Global)',
+  };
+}
+
 export async function fetchEnvironmentalRisk(lat: number, lon: number): Promise<EnvironmentalRiskData | null> {
   try {
-    const params = new URLSearchParams({
-      latitude: lat.toFixed(6),
-      longitude: lon.toFixed(6),
-      current: 'us_aqi,pm2_5,ozone,carbon_monoxide,nitrogen_dioxide,dust',
-      domains: 'cams_global',
-    });
-
-    const url = `${OPEN_METEO_AQ_API}?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'ScoreCasa/1.0 (Real Estate Analysis Platform)' },
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Open-Meteo AQ API returned ${response.status}`);
+    const airNowKey = process.env.AIRNOW_API_KEY?.trim();
+    const openMeteoKey = process.env.OPEN_METEO_API_KEY?.trim();
+    let reading: AirReading | null = null;
+    if (airNowKey) {
+      reading = await fetchAirNow(lat, lon, airNowKey).catch(err => { console.warn('[Air Quality] AirNow failed:', err.message); return null; });
     }
-
-    const raw = await response.json();
-    const current = raw?.current;
-
-    if (!current) {
-      console.log('[Air Quality] No current data in Open-Meteo response');
+    if (!reading && openMeteoKey) {
+      reading = await fetchOpenMeteo(lat, lon, openMeteoKey).catch(err => { console.warn('[Air Quality] Open-Meteo failed:', err.message); return null; });
+    }
+    if (!reading) {
+      if (!airNowKey && !openMeteoKey) console.log('[Air Quality] No AIRNOW_API_KEY set; section skipped');
       return null;
     }
 
-    const usAqi: number = current.us_aqi ?? 0;
-    const pm25: number = current.pm2_5 ?? 0;
-    const ozone: number = current.ozone ?? 0;
-    const no2: number = current.nitrogen_dioxide ?? 0;
+    const { usAqi, pm25, ozone, no2 } = reading;
 
     const pm25Pctile = pm25ToPercentile(pm25);
     const ozonePctile = ozoneToPercentile(ozone);
@@ -155,7 +214,7 @@ export async function fetchEnvironmentalRisk(lat: number, lon: number): Promise<
       no2Concentration: no2,
       keyRisks,
       insight,
-      dataSource: 'Open-Meteo AQ (CAMS Global) · AirToxScreen context',
+      dataSource: reading.source,
       lat,
       lon,
     };

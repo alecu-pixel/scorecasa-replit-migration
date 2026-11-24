@@ -588,7 +588,7 @@ const demoData: PropertyAnalysisResult = {
     no2Concentration: 8.4,
     insight: 'Air quality is good near this property. The current US AQI reads 42 (Good), with PM2.5 at 6.2 μg/m³ — well below EPA\'s annual standard of 12 μg/m³.',
     keyRisks: [],
-    dataSource: 'Open-Meteo AQ (CAMS Global) · AirToxScreen context',
+    dataSource: 'EPA AirNow (Houston)',
     lat: 30.2747,
     lon: -97.7403,
   },
